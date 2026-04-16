@@ -1,6 +1,6 @@
 ---
-ú---
 title: "ISSS608 - VAA"
+author: "Do Thi Tue Minh"
 ---
 
 This is a Quarto website.
