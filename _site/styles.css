@@ -1,1 +1,132 @@
-/* css styles */
+/* styles.css — Sketchy + Mario colors + Fira Code Nerd Font */
+
+/* ===== LOAD FONT (fallback if Nerd Font not installed) ===== */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
+
+/* ===== COLOR VARIABLES ===== */
+:root {
+  --mario-red: #e52521;
+  --mario-blue: #049cd8;
+  --mario-yellow: #fbd000;
+  --mario-green: #43b047;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  background-color: var(--mario-red) !important;
+  border: 2px solid var(--bs-body-color);
+  border-radius: 0 0 18px 18px;
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link,
+.navbar .menu-text {
+  color: #ffffff !important;
+}
+
+.navbar .nav-link:hover {
+  color: #ffe082 !important;
+}
+
+/* ===== TABSET ===== */
+.panel-tabset .nav-tabs {
+  border-bottom: none;
+}
+
+.panel-tabset .nav-tabs .nav-link {
+  border: 2px solid var(--bs-body-color);
+  border-radius: 12px 12px 0 0;
+  margin-right: 0.4rem;
+  font-weight: 600;
+}
+
+/* MULTI-COLOR TABS */
+.panel-tabset .nav-tabs .nav-link:nth-child(1) {
+  background-color: var(--mario-red);
+  color: white;
+}
+
+.panel-tabset .nav-tabs .nav-link:nth-child(2) {
+  background-color: var(--mario-blue);
+  color: white;
+}
+
+.panel-tabset .nav-tabs .nav-link:nth-child(3) {
+  background-color: var(--mario-green);
+  color: white;
+}
+
+/* ACTIVE TAB */
+.panel-tabset .nav-tabs .nav-link.active {
+  border-bottom-color: var(--bs-body-bg);
+}
+
+/* TAB CONTENT */
+.panel-tabset .tab-content {
+  border: 2px solid var(--bs-body-color);
+  border-radius: 0 14px 14px 14px;
+  padding: 1rem;
+}
+
+/* ===== CODE BLOCK (R CHUNKS) ===== */
+pre,
+pre code,
+code.sourceCode,
+div.sourceCode pre {
+  font-family: "FiraCode Nerd Font", "Fira Code", "JetBrains Mono", "Source Code Pro", monospace !important;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-variant-ligatures: contextual;
+  border: 3px solid var(--mario-yellow);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+/* INLINE CODE */
+code {
+  font-family: "FiraCode Nerd Font", "Fira Code", monospace !important;
+  background-color: #fff3cd;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+/* ===== LINKS ===== */
+a {
+  color: var(--mario-blue);
+}
+
+a:hover {
+  color: var(--mario-red);
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+  background-color: var(--mario-red);
+  border-color: var(--mario-red);
+}
+
+.btn-success {
+  background-color: var(--mario-green);
+  border-color: var(--mario-green);
+}
+
+.btn-info {
+  background-color: var(--mario-blue);
+  border-color: var(--mario-blue);
+}
+
+.btn-warning {
+  background-color: var(--mario-yellow);
+  border-color: var(--mario-yellow);
+  color: black;
+}
+
+/* ===== NAVBAR ROUND EDGE ===== */
+.navbar {
+  border-radius: 0 0 18px 18px;
+}
+
+/* ===== TOC ===== */
+.sidebar nav[role="doc-toc"] {
+  border-left: 3px solid var(--mario-blue);
+}

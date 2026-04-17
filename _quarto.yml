@@ -1,9 +1,14 @@
+# _quarto.yml
 project:
   type: website
+  output-dir: _site
 
 website:
   title: "ISSS608-VAA"
   navbar:
+    background: dark
+    foreground: light
+    search: true
     left:
       - text: "Hands-on Exercise"
         menu:
@@ -12,15 +17,13 @@ website:
     right:
       - href: index.qmd
         text: Home
-      - about.qmd
+      - href: about.qmd
+        text: About
 
 format:
   html:
-    theme:
-      - cosmo
-      - brand
+    theme: sketchy
     css: styles.css
     toc: true
 
 editor: visual
-
