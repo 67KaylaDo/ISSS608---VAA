@@ -4,6 +4,3 @@ author: "Do Thi Tue Minh"
 ---
 
 Welcome to my ISS608 website!
-
-```{}
-```
