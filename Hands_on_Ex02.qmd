@@ -4,6 +4,21 @@ date: "2026-04-17"
 date-modified: "2026-04-17"
 ---
 
+```{r}
+#| include: false
+
+library(ggplot2)
+
+theme_set(
+  theme_gray() +
+    theme(
+      plot.title = element_text(size = 16),
+      plot.margin = margin(15, 20, 15, 15)
+    )
+)
+```
+
+
 ## 1. Overview
 In this chapter, you will be introduced to several ggplot2 extensions for creating more elegant and effective statistical graphics. By the end of this exercise, you will be able to:
 - control the placement of annotation on a graph by using functions provided in ggrepel package,

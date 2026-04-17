@@ -30,5 +30,14 @@ format:
     toc: true
     code-fold: true
     code-summary: "Show code block"
+    
+execute:
+  warning: false
+  message: false
+  echo: true
+  fig-width: 14
+  fig-height: 8
+  fig-align: center
+  out-width: "100%"
 
 editor: visual
