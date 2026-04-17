@@ -25,5 +25,7 @@ format:
     theme: sketchy
     css: styles.css
     toc: true
+    code-fold: true
+    code-summary: "Show code block"
 
 editor: visual
