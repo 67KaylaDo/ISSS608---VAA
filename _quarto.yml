@@ -17,6 +17,8 @@ website:
             href: Hands_on_Ex01.qmd
           - text: "2. Beyond ggplot2 Fundamentals"
             href: Hands_on_Ex02.qmd
+          - text: "3a. Programming Interactive Data Visualisation with R"
+            href: Hands_on_Ex03.qmd
     right:
       - href: index.qmd
         text: Home
@@ -35,8 +37,8 @@ execute:
   warning: false
   message: false
   echo: true
-  fig-width: 14
-  fig-height: 8
+  fig-width: 15
+  fig-height: 9
   fig-align: center
   out-width: "100%"
 
