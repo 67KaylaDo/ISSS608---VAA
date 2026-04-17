@@ -5,6 +5,7 @@ project:
 
 website:
   title: "ISSS608-VAA"
+  favicon: Hands-on Exercises/Hands-on W1/Mario.png
   navbar:
     background: dark
     foreground: light
