@@ -14,6 +14,8 @@ website:
         menu:
           - text: "1. A Layered Grammar of Graphics: ggplot2 methods"
             href: Hands_on_Ex01.qmd
+          - text: "2. Beyond ggplot2 Fundamentals"
+            href: Hands_on_Ex02.qmd
     right:
       - href: index.qmd
         text: Home
