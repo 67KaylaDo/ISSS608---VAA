@@ -1,4 +1,58 @@
 ---
-title: "Hands-on Exercise 1"
-author: "Do Thi Tue Minh (Kayla Do)"
+title: "A Layered Grammar of Graphics: ggplot2 methods"
+date: "2026-04-17"
+date-modified: "2026-04-17"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    number-sections: true
+    code-fold: show
+    code-summary: "Show the code"
+    code-copy: true
+editor: visual
 ---
+
+## Learning Outcome
+
+In this chapter, you will learn the basic ideas behind `ggplot2` and the main components used to build statistical graphics. You will also practise using these components to create data visualisations based on the layered grammar of graphics.
+
+By the end of this chapter, you should be able to use the essential graphical elements in `ggplot2` to produce clear and functional statistical graphics.
+
+## Getting started
+
+::: panel-tabset
+## Installing and loading libraries
+
+The code chunk below uses `p_load()` of `pacman` package to check if tidyverse packages are installed in the computer. If they are, then they will be launched into R.
+
+```{r}
+pacman::p_load(tidyverse,
+               patchwork)
+```
+
+## Importing Data
+
+The code chunk below imports `exam_data.csv` into R environment by using `read_csv()` function of `readr` package.
+
+`readr` is one of the tidyverse package.
+
+```{r}
+exam_data <- read_csv("Hands-on Exercises/Hands-on W1/Exam_data.csv")
+```
+
+## Understanding the Data
+
+```{r}
+summary(exam_data)
+```
+
+Year end examination grades of a cohort of primary 3 students from a local school.
+
+There are a total of seven attributes. Four of them are categorical data type and the other three are in continuous data type.
+
+Categorical attributes are ID, CLASS, GENDER and RACE.
+
+Continuous attributes are MATHS, ENGLISH and SCIENCE.
+:::
