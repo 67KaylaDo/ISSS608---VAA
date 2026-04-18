@@ -8,7 +8,8 @@
 
 <meta name="dcterms.date" content="2026-04-17">
 
-<title>Beyond ggplot2 Fundamentals – ISSS608-VAA</title>
+<title>Beyond ggplot2 Fundamentals – &lt;img src="Hands-on Exercises/Hands-on W1/Mario 6.png" height="40" style="vertical-align:middle; margin-right:10px;"&gt;
+MINH'S VISUAL ANALYTICS WEBSITE</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -69,7 +70,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./Hands-on Exercises/Hands-on W1/Mario.png" rel="icon" type="image/png">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -120,7 +120,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">ISSS608-VAA</span>
+    <span class="navbar-title"><img src="Hands-on Exercises/Hands-on W1/Mario 6.png" height="40" style="vertical-align:middle; margin-right:10px;"> MINH’S VISUAL ANALYTICS WEBSITE</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -231,7 +231,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">1. Overview</h2>
-<p>In this chapter, you will be introduced to several ggplot2 extensions for creating more elegant and effective statistical graphics. By the end of this exercise, you will be able to: - control the placement of annotation on a graph by using functions provided in ggrepel package, - create professional publication quality figure by using functions provided in ggthemes and hrbrthemes packages, - plot composite figure by combining ggplot2 graphs by using patchwork package.</p>
+<p>In this chapter, you will learn how to use different <code>ggplot2</code> extensions to create more polished and visually appealing statistical graphics. By the end of this exercise, you will be able to:</p>
+<ul>
+<li>adjust and control the placement of labels and annotations using the <code>ggrepel</code> package,</li>
+<li>design high-quality, publication-ready figures with the help of <code>ggthemes</code> and <code>hrbrthemes</code>,</li>
+<li>combine multiple plots into a single composite figure using the <code>patchwork</code> package.</li>
+</ul>
 </section>
 <section id="getting-started" class="level2">
 <h2 class="anchored" data-anchor-id="getting-started">2. Getting Started</h2>
@@ -257,8 +262,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
-<p>For the purpose of this exercise, a data file called Exam_data will be used. It consists of year end examination grades of a cohort of primary 3 students from a local school. It is in csv file format.</p>
-<p>The code chunk below imports exam_data.csv into R environment by using read_csv() function of readr package. readr is one of the tidyverse package.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code block</summary>
@@ -281,7 +284,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -320,7 +323,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -355,7 +358,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -391,7 +394,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -423,7 +426,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -479,7 +482,7 @@ Tip
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -511,7 +514,7 @@ Tip
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -543,7 +546,7 @@ Tip
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -588,7 +591,7 @@ Tip
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -621,7 +624,7 @@ Tip
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -650,7 +653,7 @@ Tip
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -679,7 +682,7 @@ Tip
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
@@ -711,7 +714,7 @@ Tip
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid figure-img" width="1344"></p>
+<p><img src="Hands_on_Ex02_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid figure-img" width="1440"></p>
 </figure>
 </div>
 </div>
