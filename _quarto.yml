@@ -7,6 +7,7 @@ website:
   title: |
     <img src="Hands-on Exercises/Hands-on W1/Mario 6.png" height="40" style="vertical-align:middle; margin-right:10px;">
     MINH'S VISUAL ANALYTICS WEBSITE
+  favicon: Hands-on Exercises/Hands-on W1/Mario.png 
   navbar:
     background: dark
     foreground: light
