@@ -4,8 +4,9 @@ project:
   output-dir: _site
 
 website:
-  title: "ISSS608-VAA"
-  favicon: Hands-on Exercises/Hands-on W1/Mario.png
+  title: |
+    <img src="Hands-on Exercises/Hands-on W1/Mario 6.png" height="40" style="vertical-align:middle; margin-right:10px;">
+    MINH'S VISUAL ANALYTICS WEBSITE
   navbar:
     background: dark
     foreground: light
@@ -19,6 +20,8 @@ website:
             href: Hands_on_Ex02.qmd
           - text: "3a. Programming Interactive Data Visualisation with R"
             href: Hands_on_Ex03.qmd
+            
+          
     right:
       - href: index.qmd
         text: Home
