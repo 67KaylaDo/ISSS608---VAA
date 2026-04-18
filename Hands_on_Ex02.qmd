@@ -2,6 +2,11 @@
 title: "Beyond ggplot2 Fundamentals"
 date: "2026-04-17"
 date-modified: "last-modified"
+execute:
+  eval: true
+  echo: true
+  warning: false
+  freeze: true
 ---
 
 ```{r}
