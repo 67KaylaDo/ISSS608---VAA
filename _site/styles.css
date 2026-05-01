@@ -130,3 +130,9 @@ a:hover {
 .sidebar nav[role="doc-toc"] {
   border-left: 3px solid var(--mario-blue);
 }
+
+/* ===== DROPDOWN MENU FIX ===== */
+.dropdown-menu {
+  max-height: 90vh;
+  overflow-y: auto;
+}
