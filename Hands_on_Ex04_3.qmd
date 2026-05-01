@@ -32,7 +32,6 @@ For the purpose of this exercise, the following R packages will be used, they ar
 -   **ggdist** for visualising distribution and uncertainty.
 
 ```{r}
-devtools::install_github("wilkelab/ungeviz")
 pacman::p_load(plotly, crosstalk, DT,
                ggdist, ggridges, colorspace,
                gganimate, tidyverse)
@@ -197,14 +196,14 @@ bscols(widths = c(4, 8),
                      digits = 2))
 ```
 
-## **4 Visualising Uncertainty:** ggdist\*\* package\*\*
+## **4. Visualising Uncertainty: ggdist package **
 
 -   [**ggdist**](https://mjskay.github.io/ggdist/index.html) is an R package that provides a flexible set of ggplot2 geoms and stats designed especially for visualising distributions and uncertainty.
 -   It is designed for both frequentist and Bayesian uncertainty visualization, taking the view that uncertainty visualization can be unified through the perspective of distribution visualization:
     -   for frequentist models, one visualises confidence distributions or bootstrap distributions (see vignette("freq-uncertainty-vis"));
     -   for Bayesian models, one visualises probability distributions (see the tidybayes package, which builds on top of ggdist).
 
-### 4.1 Visualizing the uncertainty of point estimates: **ggdist** methods
+### 4.1 Visualizing the uncertainty of point estimates: ggdist methods
 
 In the code chunk below, [`stat_pointinterval()`](https://mjskay.github.io/ggdist/reference/stat_pointinterval.html) of **ggdist** is used to build a visual for displaying distribution of maths scores by race.
 
@@ -242,10 +241,21 @@ exam %>%
 ### 4.2 Visualizing the uncertainty of point estimates: **ggdist** methods
 
 ::: callout-tip
-## Your turn
-
 Makeover the plot on previous slide by showing 95% and 99% confidence intervals.
 :::
+```{r}
+exam %>%
+  ggplot(aes(x = RACE, y = MATHS)) +
+  stat_pointinterval(
+    .width = c(0.95, 0.99),
+    show.legend = TRUE
+  ) +
+  labs(
+    title = "Visualising confidence intervals of mean math score",
+    subtitle = "Mean Point + Multiple-interval plot (95% and 99% CI)",
+    color = "Confidence Interval"
+  )
+```
 
 ```{r}
 exam %>%
@@ -260,10 +270,10 @@ exam %>%
 ```
 
 ::: callout-tip
-Gentle advice: This function comes with many arguments, students are advised to read the syntax reference for more detail.
+Gentle advice: This function comes with many arguments, should read the syntax reference for more detail!
 :::
 
-### 4.3 Visualizing the uncertainty of point estimates: **ggdist** methods
+### 4.3 Visualizing the uncertainty of point estimates: ggdist methods
 
 In the code chunk below, [`stat_gradientinterval()`](https://mjskay.github.io/ggdist/reference/stat_gradientinterval.html) of **ggdist** is used to build a visual for displaying distribution of maths scores by race.
 
