@@ -27,6 +27,8 @@ website:
             href: Hands_on_Ex04_1.qmd
           - text: "4b. Visual Statistical Analysis"
             href: Hands_on_Ex04_2.qmd
+          - text: "4c. Visualising Uncertainty"
+            href: Hands_on_Ex04_3.qmd
             
           
     right:
