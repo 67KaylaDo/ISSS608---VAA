@@ -24,7 +24,7 @@ website:
           - text: "3b. Programming Animated Statistical Graphics with R"
             href: Hands_on_Ex03_2.qmd
           - text: "4a. Visualing Distribution"
-            href: Hands_on_Ex04_1.qm
+            href: Hands_on_Ex04_1.qmd
           - text: "4b. Visual Statistical Analysis"
             href: Hands_on_Ex04_2.qmd
             
