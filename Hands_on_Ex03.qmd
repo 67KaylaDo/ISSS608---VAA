@@ -6,7 +6,7 @@ date-modified: "2026-04-17"
 
 ## 1. Learning Outcome
 
-In this hands-on exercise, you will learn how to create interactive data visualisation by using functions provided by ggiraph and plotly packages.
+In this hands-on exercise, I will create interactive data visualisation by using functions provided by ggiraph and plotly packages.
 
 ## 2. Getting Started
 
@@ -464,11 +464,12 @@ There are two ways to create interactive graph by using plotly, they are:
 -   by using ggplotly()
 
 ### Creating an interactive scatter plot: plot_ly() method
+
 The tabset below shows an example a basic interactive plot created by using plot_ly().
 
-::: {.panel-tabset}
-
+::: panel-tabset
 ###The plot
+
 ```{r}
 #| echo: false
 
@@ -478,6 +479,7 @@ plot_ly(data = exam_data,
 ```
 
 ###The code chunk
+
 ```{r}
 #| eval: false
 
@@ -491,8 +493,9 @@ plot_ly(data = exam_data,
 
 In the code chunk below, color argument is mapped to a qualitative visual variable (i.e. RACE).
 
-::: {.panel-tabset}
+::: panel-tabset
 ### The plot
+
 ```{r}
 #| echo: false
 
@@ -501,11 +504,13 @@ plot_ly(data = exam_data,
         y = ~MATHS,
         color = ~RACE)
 ```
+
 Interactive:
 
 Click on the colour symbol at the legend.
 
 ### The code chunk
+
 ```{r}
 #| eval: false
 
@@ -517,10 +522,12 @@ plot_ly(data = exam_data,
 :::
 
 ### Creating an interactive scatter plot: ggplotly() method
+
 The code chunk below plots an interactive scatter plot by using ggplotly().
 
-::: {.panel-tabset}
+::: panel-tabset
 ### The plot
+
 ```{r}
 #| echo: false
 
@@ -535,6 +542,7 @@ ggplotly(p)
 ```
 
 ### The code chunk
+
 ```{r}
 #| eval: false
 
@@ -547,20 +555,21 @@ p <- ggplot(data = exam_data,
 
 ggplotly(p)
 ```
-Notice that the only extra line you need to include in the code chunk is ggplotly().
 
+Notice that the only extra line you need to include in the code chunk is ggplotly().
 :::
 
 ### Coordinated Multiple Views with plotly
+
 The creation of a coordinated linked plot by using plotly involves three steps:
 
-- [highlight_key()](https://www.rdocumentation.org/packages/plotly/versions/4.9.2/topics/highlight_key) of plotly package is used as shared data.
-- two scatterplots will be created by using ggplot2 functions.
-- lastly, [subplot()](https://plotly.com/r/subplots/) of plotly package is used to place them next to each other side-by-side.
+-   [highlight_key()](https://www.rdocumentation.org/packages/plotly/versions/4.9.2/topics/highlight_key) of plotly package is used as shared data.
+-   two scatterplots will be created by using ggplot2 functions.
+-   lastly, [subplot()](https://plotly.com/r/subplots/) of plotly package is used to place them next to each other side-by-side.
 
-::: {.panel-tabset}
-
+::: panel-tabset
 ### The plot
+
 ```{r}
 #| echo: false
 
@@ -588,6 +597,7 @@ subplot(ggplotly(p1),
 Click on a data point of one of the scatterplot and see how the corresponding point on the other scatterplot is selected.
 
 ### The code chunk
+
 ```{r}
 #| eval: false
 
@@ -610,21 +620,21 @@ p2 <- ggplot(data = d,
 subplot(ggplotly(p1),
         ggplotly(p2))
 ```
-
 :::
 
 Thing to learn from the code chunk:
 
-- highlight_key() simply creates an object of class [crosstalk::SharedData](https://rdrr.io/cran/crosstalk/man/SharedData.html).
-- Visit this [link](https://rstudio.github.io/crosstalk/) to learn more about crosstalk.
+-   highlight_key() simply creates an object of class [crosstalk::SharedData](https://rdrr.io/cran/crosstalk/man/SharedData.html).
+-   Visit this [link](https://rstudio.github.io/crosstalk/) to learn more about crosstalk.
 
 ## 8. Interactive Data Visualisation - crosstalk methods!
+
 Crosstalk is an add-on to the htmlwidgets package. It extends htmlwidgets with a set of classes, functions, and conventions for implementing cross-widget interactions (currently, linked brushing and filtering).
 
 ### Interactive Data Table: DT package
 
-- A wrapper of the JavaScript Library DataTables
-- Data objects in R can be rendered as HTML tables using the JavaScript library DataTables (typically via R Markdown or Shiny).
+-   A wrapper of the JavaScript Library DataTables
+-   Data objects in R can be rendered as HTML tables using the JavaScript library DataTables (typically via R Markdown or Shiny).
 
 ```{r}
 DT::datatable(exam_data, class = "compact")
@@ -634,8 +644,9 @@ DT::datatable(exam_data, class = "compact")
 
 Code chunk below is used to implement the coordinated brushing shown above.
 
-::: {.panel-tabset}
+::: panel-tabset
 ### The plot
+
 ```{r}
 #| echo: false
 
@@ -658,6 +669,7 @@ crosstalk::bscols(
 ```
 
 ### The code chunk
+
 ```{r}
 #| eval: false
 
@@ -681,9 +693,8 @@ crosstalk::bscols(
 
 Things to learn from the code chunk:
 
-- highlight() is a function of plotly package. It sets a variety of options for brushing (i.e., highlighting) multiple plots. These options are primarily designed for linking multiple plotly graphs, and may not behave as expected when linking plotly to another htmlwidget package via crosstalk. In some cases, other htmlwidgets will respect these options, such as persistent selection in leaflet.
-- bscols() is a helper function of crosstalk package. It makes it easy to put HTML elements side by side. It can be called directly from the console but is especially designed to work in an R Markdown document. Warning: This will bring in all of Bootstrap!.
-
+-   highlight() is a function of plotly package. It sets a variety of options for brushing (i.e., highlighting) multiple plots. These options are primarily designed for linking multiple plotly graphs, and may not behave as expected when linking plotly to another htmlwidget package via crosstalk. In some cases, other htmlwidgets will respect these options, such as persistent selection in leaflet.
+-   bscols() is a helper function of crosstalk package. It makes it easy to put HTML elements side by side. It can be called directly from the console but is especially designed to work in an R Markdown document. Warning: This will bring in all of Bootstrap!.
 :::
 
 ## 9. Reference
@@ -692,19 +703,19 @@ Things to learn from the code chunk:
 
 This [link](https://davidgohel.github.io/ggiraph/) provides online version of the reference guide and several useful articles. Use this [link](https://cran.r-project.org/package=ggiraph) to download the pdf version of the reference guide.
 
-- [How to Plot With Ggiraph](https://davidgohel.github.io/ggiraph/)
-- [Interactive map of France with ggiraph](https://davidgohel.github.io/ggiraph/)
-- [Custom interactive sunbursts with ggplot in R](https://www.r-bloggers.com/2019/06/custom-interactive-sunbursts-with-ggplot-in-r/)
-- This [link](https://davidgohel.github.io/ggiraph/) provides code example on how ggiraph is used to interactive graphs for [Swiss Olympians - the solo specialists](https://swissolympians.app/)
+-   [How to Plot With Ggiraph](https://davidgohel.github.io/ggiraph/)
+-   [Interactive map of France with ggiraph](https://davidgohel.github.io/ggiraph/)
+-   [Custom interactive sunbursts with ggplot in R](https://www.r-bloggers.com/2019/06/custom-interactive-sunbursts-with-ggplot-in-r/)
+-   This [link](https://davidgohel.github.io/ggiraph/) provides code example on how ggiraph is used to interactive graphs for [Swiss Olympians - the solo specialists](https://swissolympians.app/)
 
 ### plotly for R
 
-- [Getting Started with Plotly in R](https://plotly.com/r/getting-started/)
-- A collection of plotly R graphs are available via this [link](https://plotly.com/r/)
-- Carson Sievert (2020) **Interactive web-based data visualization with R, plotly, and shiny**, Chapman and Hall/CRC is the best resource to learn plotly for R. The online version is available via this [link](https://plotly-r.com/)
-- [Plotly R Figure Reference](https://plotly.com/r/reference/) provides a comprehensive discussion of each visual representations.
-- [Plotly R Library Fundamentals](https://plotly.com/r/) is a good place to learn the fundamental features of Plotly’s R API.
-- [Getting Started](https://plotly.com/r/getting-started/)
-- Visit this [link](https://r-graph-gallery.com/animation.html) for a very interesting implementation of gganimate by your senior.
-- [Building an animation step-by-step with gganimate](https://www.data-imaginist.com/2019/gganimate-has-transitioned-to-a-state-of-release/)
-- [Creating a composite gif with multiple gganimate panels](https://www.tidyverse.org/blog/2019/04/gganimate-1-0-0/)
+-   [Getting Started with Plotly in R](https://plotly.com/r/getting-started/)
+-   A collection of plotly R graphs are available via this [link](https://plotly.com/r/)
+-   Carson Sievert (2020) **Interactive web-based data visualization with R, plotly, and shiny**, Chapman and Hall/CRC is the best resource to learn plotly for R. The online version is available via this [link](https://plotly-r.com/)
+-   [Plotly R Figure Reference](https://plotly.com/r/reference/) provides a comprehensive discussion of each visual representations.
+-   [Plotly R Library Fundamentals](https://plotly.com/r/) is a good place to learn the fundamental features of Plotly’s R API.
+-   [Getting Started](https://plotly.com/r/getting-started/)
+-   Visit this [link](https://r-graph-gallery.com/animation.html) for a very interesting implementation of gganimate by your senior.
+-   [Building an animation step-by-step with gganimate](https://www.data-imaginist.com/2019/gganimate-has-transitioned-to-a-state-of-release/)
+-   [Creating a composite gif with multiple gganimate panels](https://www.tidyverse.org/blog/2019/04/gganimate-1-0-0/)
