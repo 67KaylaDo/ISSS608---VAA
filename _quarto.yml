@@ -26,7 +26,7 @@ website:
           - text: "4a. Visualing Distribution"
             href: Hands_on_Ex04_1.qm
           - text: "4b. Visual Statistical Analysis"
-            href: Hands_on_Ex04_1.qmd
+            href: Hands_on_Ex04_2.qmd
             
           
     right:
