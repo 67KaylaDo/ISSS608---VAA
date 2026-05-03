@@ -29,6 +29,8 @@ website:
             href: Hands_on_Ex04_2.qmd
           - text: "4c. Visualising Uncertainty"
             href: Hands_on_Ex04_3.qmd
+          - text: "4d. Funnel Plots for Fair Comparisons"
+            href: Hands_on_Ex04_4.qmd
             
           
     right:
