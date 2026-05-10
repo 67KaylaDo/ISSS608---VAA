@@ -31,6 +31,9 @@ website:
             href: Hands_on_Ex04_3.qmd
           - text: "4d. Funnel Plots for Fair Comparisons"
             href: Hands_on_Ex04_4.qmd
+          - text: "5a. Creating Ternary Plot with R"
+            href: Hands_on_Ex05_1.qmd
+            
             
           
     right:
