@@ -43,7 +43,7 @@ website:
 
       - text: "Take-home Exercise"
         menu:
-          - text: "--- Take-home Exercise 1 ---"
+          - text: "_____ Take-home Exercise 1 _____"
           - text: "Technical Report"
             href: Take_home_Ex01_technical.qmd
           - text: "Executive Summary"
