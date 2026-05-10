@@ -8,3 +8,313 @@ execute:
   warning: false
   freeze: true
 ---
+
+## 1. Overview
+
+In this hands-on exercise, I will gain hands-on experience designing treemaps using appropriate R packages. The exercise consists of three main sections. First, I will manipulate transaction data into a treemap structure using selected functions from the **dplyr** package. Then, I will plot static treemaps using the **treemap** package. In the third section, I will design interactive treemaps using the **d3treeR** package.
+
+## 2. Installing and Launching R Packages
+
+I will first check and load the **treemap**, **treemapify**, and **tidyverse** packages.
+
+```{r}
+pacman::p_load(treemap, treemapify, tidyverse)
+```
+
+## 3. Data Wrangling
+
+In this exercise, I will use the *REALIS2018.csv* data, which provides information on private property transaction records in 2018. The dataset is extracted from the REALIS portal of the Urban Redevelopment Authority (URA).
+
+### 3.1 Importing the Data Set
+
+I will use *read_csv()* of **readr** to import realis2018.csv into R and parse it into a tibble data frame.
+
+```{r}
+realis2018 <- read_csv("Hands-on Exercises/Hands-on W5/realis2018.csv")
+```
+
+### 3.2 Data Wrangling and Manipulation
+
+The *realis2018* data frame is in transaction record form — highly disaggregated and not appropriate for plotting a treemap. I will perform the following steps:
+
+-   Group transaction records by *Project Name*, *Planning Region*, *Planning Area*, *Property Type*, and *Type of Sale*.
+-   Compute *Total Unit Sold*, *Total Area*, *Median Unit Price*, and *Median Transacted Price* by applying appropriate summary statistics.
+
+I will use two key **dplyr** verbs: *group_by()* and *summarise()*.
+
+*group_by()* breaks down a data frame into specified groups of rows, after which verbs are automatically applied "by group". *summarise()* computes the summary for each group.
+
+### 3.3 Grouped Summaries without the Pipe
+
+The code chunk below shows a two-line approach to perform the steps.
+
+```{r}
+realis2018_grouped <- group_by(realis2018, `Project Name`,
+                               `Planning Region`, `Planning Area`,
+                               `Property Type`, `Type of Sale`)
+realis2018_summarised <- summarise(realis2018_grouped,
+                          `Total Unit Sold` = sum(`No. of Units`, na.rm = TRUE),
+                          `Total Area` = sum(`Area (sqm)`, na.rm = TRUE),
+                          `Median Unit Price ($ psm)` = median(`Unit Price ($ psm)`, na.rm = TRUE),
+                          `Median Transacted Price` = median(`Transacted Price ($)`, na.rm = TRUE))
+```
+
+::: callout-note 
+Aggregation functions such as *sum()* and *median()* follow the usual rule of missing values — if there's any missing value in the input, the output will be missing. The argument `na.rm = TRUE` removes missing values prior to computation.
+::: 
+
+### 3.4 Grouped Summaries with the Pipe
+
+A more efficient way to tackle the same process is using the pipe `%>%`:
+
+```{r}
+realis2018_summarised <- realis2018 %>%
+  group_by(`Project Name`, `Planning Region`,
+           `Planning Area`, `Property Type`,
+           `Type of Sale`) %>%
+  summarise(`Total Unit Sold` = sum(`No. of Units`, na.rm = TRUE),
+            `Total Area` = sum(`Area (sqm)`, na.rm = TRUE),
+            `Median Unit Price ($ psm)` = median(`Unit Price ($ psm)`, na.rm = TRUE),
+            `Median Transacted Price` = median(`Transacted Price ($)`, na.rm = TRUE))
+```
+
+## 4. Designing Treemap with treemap Package
+
+The **treemap** package is specially designed to offer great flexibility in drawing treemaps. The core function *treemap()* offers at least 43 arguments. In this section, I will explore the major arguments for designing elegant and truthful treemaps.
+
+### 4.1 Designing a Static Treemap
+
+In this section, I will use *treemap()* to plot a treemap showing the distribution of median unit prices and total unit sold of resale condominiums by geographic hierarchy in 2018.
+
+First, I will filter records belonging to resale condominium property type:
+
+```{r}
+realis2018_selected <- realis2018_summarised %>%
+  filter(`Property Type` == "Condominium", `Type of Sale` == "Resale")
+```
+
+### 4.2 Using the Basic Arguments
+
+The code chunk below designs a treemap using the three core arguments: *index*, *vSize*, and *vColor*.
+
+```{r}
+treemap(realis2018_selected,
+        index = c("Planning Region", "Planning Area", "Project Name"),
+        vSize = "Total Unit Sold",
+        vColor = "Median Unit Price ($ psm)",
+        title = "Resale Condominium by Planning Region and Area, 2018",
+        title.legend = "Median Unit Price (S$ per sq. m)"
+        )
+```
+
+Things to note:
+
+-   `index`: the index vector must consist of at least two column names, otherwise no hierarchy treemap will be plotted. The first name is the highest aggregation level.
+-   `vSize`: the column must not contain negative values, as its values map to the sizes of the rectangles.
+
+::: callout-warning
+The treemap above was wrongly coloured. For a correctly designed treemap, the colours of the rectangles should be in different intensities showing median unit prices. Without defining `type`, *treemap()* assumes `type = index`, meaning it colours by the hierarchy of planning areas.
+:::
+
+### 4.3 Working with vColor and type Arguments
+
+I will now define the `type` argument as `"value"` for correct colouring:
+
+```{r}
+treemap(realis2018_selected,
+        index = c("Planning Region", "Planning Area", "Project Name"),
+        vSize = "Total Unit Sold",
+        vColor = "Median Unit Price ($ psm)",
+        type = "value",
+        title = "Resale Condominium by Planning Region and Area, 2018",
+        title.legend = "Median Unit Price (S$ per sq. m)"
+        )
+```
+
+The rectangles are now coloured with different intensities of green, reflecting their respective median unit prices. The legend shows values binned into ten equal intervals of 5,000.
+
+### 4.4 Colours in treemap Package
+
+Two arguments determine the mapping to colour palettes: *mapping* and *palette*. The `"value"` treemap treats the palette as diverging (e.g. `"RdYlBu"`), mapping 0 to the middle colour, while `"manual"` maps min(values) to the left-end colour and max(values) to the right-end colour.
+
+### 4.5 The "value" Type Treemap
+
+```{r}
+treemap(realis2018_selected,
+        index = c("Planning Region", "Planning Area", "Project Name"),
+        vSize = "Total Unit Sold",
+        vColor = "Median Unit Price ($ psm)",
+        type = "value",
+        palette = "RdYlBu",
+        title = "Resale Condominium by Planning Region and Area, 2018",
+        title.legend = "Median Unit Price (S$ per sq. m)"
+        )
+```
+
+Note that although the `RdYlBu` palette is used, there are no red rectangles — because all median unit prices are positive.
+
+### 4.6 The "manual" Type Treemap
+
+The `"manual"` type maps the value range linearly to the colour palette:
+
+```{r}
+treemap(realis2018_selected,
+        index = c("Planning Region", "Planning Area", "Project Name"),
+        vSize = "Total Unit Sold",
+        vColor = "Median Unit Price ($ psm)",
+        type = "manual",
+        palette = "RdYlBu",
+        title = "Resale Condominium by Planning Region and Area, 2018",
+        title.legend = "Median Unit Price (S$ per sq. m)"
+        )
+```
+
+The colour scheme is confusing here because a diverging palette like `RdYlBu` is not wise when all values are positive. I will use a single colour palette instead:
+
+```{r}
+treemap(realis2018_selected,
+        index = c("Planning Region", "Planning Area", "Project Name"),
+        vSize = "Total Unit Sold",
+        vColor = "Median Unit Price ($ psm)",
+        type = "manual",
+        palette = "Blues",
+        title = "Resale Condominium by Planning Region and Area, 2018",
+        title.legend = "Median Unit Price (S$ per sq. m)"
+        )
+```
+
+### 4.7 Treemap Layout
+
+*treemap()* supports two popular treemap layouts: `"squarified"` and `"pivotSize"`. The default is `"pivotSize"`. The squarified algorithm (Bruls et al., 2000) produces good aspect ratios but ignores sorting order, while the pivot-by-size algorithm (Bederson et al., 2002) takes sorting order into account.
+
+### 4.8 Working with algorithm Argument
+
+The code chunk below plots a squarified treemap:
+
+```{r}
+treemap(realis2018_selected,
+        index = c("Planning Region", "Planning Area", "Project Name"),
+        vSize = "Total Unit Sold",
+        vColor = "Median Unit Price ($ psm)",
+        type = "manual",
+        palette = "Blues",
+        algorithm = "squarified",
+        title = "Resale Condominium by Planning Region and Area, 2018",
+        title.legend = "Median Unit Price (S$ per sq. m)"
+        )
+```
+
+### 4.9 Using sortID
+
+When `"pivotSize"` algorithm is used, the `sortID` argument determines the order in which rectangles are placed from top-left to bottom-right.
+
+```{r}
+treemap(realis2018_selected,
+        index = c("Planning Region", "Planning Area", "Project Name"),
+        vSize = "Total Unit Sold",
+        vColor = "Median Unit Price ($ psm)",
+        type = "manual",
+        palette = "Blues",
+        algorithm = "pivotSize",
+        sortID = "Median Transacted Price",
+        title = "Resale Condominium by Planning Region and Area, 2018",
+        title.legend = "Median Unit Price (S$ per sq. m)"
+        )
+```
+
+## 5. Designing Treemap using treemapify Package
+
+**treemapify** is specially developed to draw treemaps in **ggplot2**. Before getting started, I recommend reading the [Introduction to treemapify](https://cran.r-project.org/web/packages/treemapify/vignettes/introduction-to-treemapify.html) and its [user guide](https://cran.r-project.org/web/packages/treemapify/treemapify.pdf).
+
+### 5.1 Designing a Basic Treemap
+
+```{r}
+ggplot(data = realis2018_selected,
+       aes(area = `Total Unit Sold`,
+           fill = `Median Unit Price ($ psm)`),
+       layout = "scol",
+       start = "bottomleft") +
+  geom_treemap() +
+  scale_fill_gradient(low = "light blue", high = "blue")
+```
+
+### 5.2 Defining Hierarchy
+
+**Group by Planning Region:**
+
+```{r}
+ggplot(data = realis2018_selected,
+       aes(area = `Total Unit Sold`,
+           fill = `Median Unit Price ($ psm)`,
+           subgroup = `Planning Region`),
+       start = "topleft") +
+  geom_treemap()
+```
+
+**Group by Planning Area:**
+
+```{r}
+ggplot(data = realis2018_selected,
+       aes(area = `Total Unit Sold`,
+           fill = `Median Unit Price ($ psm)`,
+           subgroup = `Planning Region`,
+           subgroup2 = `Planning Area`)) +
+  geom_treemap()
+```
+
+**Adding boundary lines:**
+
+```{r}
+ggplot(data = realis2018_selected,
+       aes(area = `Total Unit Sold`,
+           fill = `Median Unit Price ($ psm)`,
+           subgroup = `Planning Region`,
+           subgroup2 = `Planning Area`)) +
+  geom_treemap() +
+  geom_treemap_subgroup2_border(colour = "gray40",
+                                size = 2) +
+  geom_treemap_subgroup_border(colour = "gray20")
+```
+
+## 6. Designing Interactive Treemap using d3treeR
+
+### 6.1 Installing d3treeR Package
+
+*d3treeR* is not available on CRAN. I will install it from GitHub as follows:
+
+```{r}
+#| eval: false
+# Step 1: Install devtools if not already installed
+install.packages("devtools")
+
+# Step 2: Load devtools and install d3treeR from GitHub
+library(devtools)
+install_github("timelyportfolio/d3treeR")
+```
+
+```{r}
+library(d3treeR)
+```
+
+### 6.2 Designing an Interactive Treemap
+
+The code below performs two steps:
+
+**Step 1:** I use *treemap()* to build a treemap using selected variables, saving the result as ***tm***.
+
+```{r}
+tm <- treemap(realis2018_summarised,
+        index = c("Planning Region", "Planning Area"),
+        vSize = "Total Unit Sold",
+        vColor = "Median Unit Price ($ psm)",
+        type = "value",
+        title = "Private Residential Property Sold, 2018",
+        title.legend = "Median Unit Price (S$ per sq. m)"
+        )
+```
+
+**Step 2:** I use *d3tree()* to build an interactive treemap from the *tm* object.
+
+```{r}
+d3tree(tm, rootname = "Singapore")
+```
