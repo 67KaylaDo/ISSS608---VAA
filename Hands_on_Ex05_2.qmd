@@ -1,0 +1,307 @@
+---
+title: "Visual Correlation Analysis"
+date: "2026-05-10"
+date-modified: "last-modified"
+execute:
+  eval: true
+  echo: true
+  warning: false
+  freeze: true
+---
+
+## 1. Overview
+
+Correlation coefficient is a popular statistic used to measure the type and strength of the relationship between two variables. The values of a correlation coefficient range between -1.0 and 1.0. A correlation coefficient of 1 shows a perfect linear relationship between the two variables, while -1.0 shows a perfect inverse relationship. A correlation coefficient of 0.0 shows no linear relationship.
+
+When multivariate data are used, the correlation coefficients of the pair comparisons are displayed in a table form known as a correlation matrix or scatterplot matrix.
+
+There are three broad reasons for computing a correlation matrix:
+
+- To reveal the relationship between high-dimensional variables pair-wisely.
+- To input into other analyses, such as exploratory factor analysis, confirmatory factor analysis, structural equation models, and linear regression when excluding missing values pairwise.
+- As a diagnostic when checking other analyses — for example, with linear regression, a high amount of correlations suggests that the estimates will be unreliable.
+
+When the data is large, both in terms of the number of observations and the number of variables, [Corrgram](http://www.datavis.ca/papers/corrgram.pdf) tends to be used to visually explore and analyse the structure and patterns of relations among variables. It is designed based on two main schemes:
+
+- Rendering the value of a correlation to depict its sign and magnitude, and
+- Reordering the variables in a correlation matrix so that "similar" variables are positioned adjacently, facilitating perception.
+
+In this hands-on exercise, I will plot data visualisations for correlation matrix with R. It consists of three main sections. First, I will create a correlation matrix using [*pairs()*](https://www.rdocumentation.org/packages/graphics/versions/3.6.0/topics/pairs) of R Graphics. Next, I will plot a corrgram using the **corrplot** package. Lastly, I will create an interactive correlation matrix using plotly R.
+
+## 2. Installing and Launching R Packages
+
+I will use the code chunk below to install and launch **corrplot**, **ggstatsplot**, and **tidyverse** in RStudio.
+
+```{r}
+pacman::p_load(corrplot, ggstatsplot, tidyverse)
+```
+
+## 3. Importing and Preparing the Data Set
+
+In this hands-on exercise, I will use the [Wine Quality Data Set](https://archive.ics.uci.edu/ml/datasets/wine+quality) from the UCI Machine Learning Repository. The data set consists of 13 variables and 6,497 observations. For this exercise, the red wine and white wine data have been combined into one data file called `wine_quality.csv`.
+
+### Importing Data
+
+I will import the data into R using *read_csv()* of the **readr** package.
+
+```{r}
+wine <- read_csv("Hands-on Exercises/Hands-on W5/wine_quality.csv")
+```
+
+Notice that beside `quality` and `type`, the rest of the variables are numerical and continuous data type.
+
+## 4. Building Correlation Matrix: *pairs()* Method
+
+There is more than one way to build a scatterplot matrix with R. In this section, I will create one using the *pairs* function of R Graphics.
+
+### 4.1 Building a Basic Correlation Matrix
+
+The figure below shows the scatterplot matrix of the Wine Quality Data — an 11 by 11 matrix.
+
+```{r}
+pairs(wine[,1:11])
+```
+
+The required input of *pairs()* can be a matrix or data frame. The code chunk below uses columns 2 to 12, covering: fixed acidity, volatile acidity, citric acid, residual sugar, chlorides, free sulfur dioxide, total sulfur dioxide, density, pH, sulphates, and alcohol.
+
+```{r}
+pairs(wine[,2:12])
+```
+
+### 4.2 Drawing the Lower Corner
+
+It is common practice to show either the upper or lower half of the correlation matrix, since it is symmetric. To show the lower half, I use the `upper.panel` argument as shown below.
+
+```{r}
+pairs(wine[,2:12], upper.panel = NULL)
+```
+
+Similarly, I can display the upper half by using:
+
+```{r}
+pairs(wine[,2:12], lower.panel = NULL)
+```
+
+### 4.3 Including Correlation Coefficients
+
+To show the correlation coefficient of each pair of variables instead of a scatter plot, I will use the [*panel.cor*](https://www.rdocumentation.org/packages/xcms/versions/1.48.0/topics/panel.cor) function. This also shows higher correlations in a larger font.
+
+```{r}
+panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y, use="complete.obs"))
+  txt <- format(c(r, 0.123456789), digits=digits)[1]
+  txt <- paste(prefix, txt, sep="")
+  if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex.cor * (1 + r) / 2)
+}
+
+pairs(wine[,2:12],
+      upper.panel = panel.cor)
+```
+
+## 5. Visualising Correlation Matrix: ggcorrmat()
+
+One major limitation of the correlation matrix is that scatter plots appear very cluttered when the number of observations is large (i.e. more than 500). To overcome this, I will use the **Corrgram** data visualisation technique suggested by D. J. Murdoch and E. D. Chow (1996) and Friendly, M (2002).
+
+In this section, I will visualise the correlation matrix using [*ggcorrmat()*](https://indrajeetpatil.github.io/ggstatsplot/reference/ggcorrmat.html) of the [**ggstatsplot**](https://indrajeetpatil.github.io/ggstatsplot/index.html) package.
+
+### 5.1 The Basic Plot
+
+One advantage of using *ggcorrmat()* is its ability to provide a comprehensive and professional statistical report as shown below.
+
+```{r}
+ggstatsplot::ggcorrmat(
+  data = wine,
+  cor.vars = 1:11)
+```
+
+```{r}
+ggstatsplot::ggcorrmat(
+  data = wine,
+  cor.vars = 1:11,
+  ggcorrplot.args = list(outline.color = "black",
+                         hc.order = TRUE,
+                         tl.cex = 10),
+  title    = "Correlogram for wine dataset",
+  subtitle = "Four pairs are not significant at p < 0.05"
+)
+```
+
+Things to note from the code chunk above:
+
+- `cor.vars` is used to compute the correlation matrix needed to build the corrgram.
+- `ggcorrplot.args` provides additional (mostly aesthetic) arguments passed to `ggcorrplot::ggcorrplot`. The list should avoid: `corr`, `method`, `p.mat`, `sig.level`, `ggtheme`, `colors`, `lab`, `pch`, `legend.title`, `digits`.
+
+The sub-code chunk below can be used to control specific components such as axis text font sizes:
+
+```{r}
+#| eval: false
+ggplot.component = list(
+    theme(text = element_text(size = 5),
+          axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8)))
+```
+
+## 6. Building Multiple Plots
+
+Since **ggstatsplot** is an extension of ggplot2, it also supports faceting — available via [*grouped_ggcorrmat()*](https://indrajeetpatil.github.io/ggstatsplot/reference/grouped_ggcorrmat.html).
+
+```{r}
+grouped_ggcorrmat(
+  data = wine,
+  cor.vars = 1:11,
+  grouping.var = type,
+  type = "robust",
+  p.adjust.method = "holm",
+  plotgrid.args = list(ncol = 2),
+  ggcorrplot.args = list(outline.color = "black",
+                         hc.order = TRUE,
+                         tl.cex = 10),
+  annotation.args = list(
+    tag_levels = "a",
+    title = "Correlogram for wine dataset",
+    subtitle = "The measures are: alcohol, sulphates, fixed acidity, citric acid, chlorides, residual sugar, density, free sulfur dioxide and volatile acidity",
+    caption = "Dataset: UCI Machine Learning Repository"
+  )
+)
+```
+
+Things to note:
+
+- To build a facet plot, the only argument needed is `grouping.var`.
+- Behind *grouped_ggcorrmat()*, the **patchwork** package is used to create the multiplot. `plotgrid.args` passes additional arguments to [*patchwork::wrap_plots*](https://patchwork.data-imaginist.com/reference/wrap_plots.html).
+- `annotation.args` calls [*plot annotation arguments*](https://patchwork.data-imaginist.com/reference/plot_annotation.html) of patchwork.
+
+## 7. Visualising Correlation Matrix using corrplot Package
+
+In this section, I will focus on **corrplot**. Before getting started, I recommend reading [An Introduction to corrplot Package](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html) for a basic understanding.
+
+### 7.1 Getting Started with corrplot
+
+First, I will compute the correlation matrix of the wine data frame using [*cor()*](https://www.rdocumentation.org/packages/stats/versions/3.6.0/topics/cor) of R Stats.
+
+```{r}
+wine.cor <- cor(wine[, 1:11])
+```
+
+Then I will use [*corrplot()*](https://www.rdocumentation.org/packages/corrplot/versions/0.2-0/topics/corrplot) to plot the corrgram using all default settings.
+
+```{r}
+corrplot(wine.cor)
+```
+
+The default visual object is a circle, laid out in a symmetric matrix. The default colour scheme is diverging blue-red — blue for positive correlation, red for negative. Colour intensity (saturation) reflects the strength of the correlation.
+
+### 7.2 Working with Visual Geometrics
+
+**corrplot** supports seven visual geometrics: circle, square, ellipse, number, shade, color, and pie. I can change it using the `method` argument:
+
+```{r}
+corrplot(wine.cor,
+         method = "ellipse")
+```
+
+### 7.3 Working with Layout
+
+*corrplot()* supports three layout types: `"full"`, `"upper"`, or `"lower"`. I will use the `type` argument to change it:
+
+```{r}
+corrplot(wine.cor,
+         method = "ellipse",
+         type = "lower")
+```
+
+I can further customise the layout using `diag` and `tl.col`:
+
+```{r}
+corrplot(wine.cor,
+         method = "ellipse",
+         type = "lower",
+         diag = FALSE,
+         tl.col = "black")
+```
+
+### 7.4 Working with Mixed Layout
+
+Using [*corrplot.mixed()*](https://www.rdocumentation.org/packages/corrplot/versions/0.84/topics/corrplot.mixed), I can design a corrgram with a visual matrix on one half and a numerical matrix on the other.
+
+```{r}
+corrplot.mixed(wine.cor,
+               lower = "ellipse",
+               upper = "number",
+               tl.pos = "lt",
+               diag = "l",
+               tl.col = "black")
+```
+
+The `lower` and `upper` arguments define the visualisation method for each half. `tl.pos` specifies axis label placement, and `diag` specifies the glyph on the principal diagonal.
+
+### 7.5 Combining Corrgram with Significance Test
+
+I am also interested in knowing which correlation pairs are statistically significant. I first compute p-values using *cor.mtest()*:
+
+```{r}
+wine.sig = cor.mtest(wine.cor, conf.level = .95)
+```
+
+Then I use the `p.mat` argument to overlay significance:
+
+```{r}
+corrplot(wine.cor,
+         method = "number",
+         type = "lower",
+         diag = FALSE,
+         tl.col = "black",
+         tl.srt = 45,
+         p.mat = wine.sig$p,
+         sig.level = .05)
+```
+
+### 7.6 Reordering a Corrgram
+
+Matrix reordering is important for mining hidden structure and patterns. I can override the default ordering using the `order` argument. **corrplot** supports four methods:
+
+- `"AOE"`: angular order of the eigenvectors (Friendly, 2002).
+- `"FPC"`: first principal component order.
+- `"hclust"`: hierarchical clustering order.
+- `"alphabet"`: alphabetical order.
+
+```{r}
+corrplot.mixed(wine.cor,
+               lower = "ellipse",
+               upper = "number",
+               tl.pos = "lt",
+               diag = "l",
+               order = "AOE",
+               tl.col = "black")
+```
+
+### 7.7 Reordering Using hclust
+
+When using **hclust**, *corrplot()* can draw rectangles around the corrgram based on hierarchical clustering results.
+
+```{r}
+corrplot(wine.cor,
+         method = "ellipse",
+         tl.pos = "lt",
+         tl.col = "black",
+         order = "hclust",
+         hclust.method = "ward.D",
+         addrect = 3)
+```
+
+## 8. Reference
+
+Michael Friendly (2002). "Corrgrams: Exploratory displays for correlation matrices". *The American Statistician*, 56, 316–324.
+
+D.J. Murdoch, E.D. Chow (1996). "A graphical display of large correlation matrices". *The American Statistician*, 50, 178–180.
+
+### R Packages
+
+- [`ggcorrmat()`](https://indrajeetpatil.github.io/ggstatsplot/articles/web_only/ggcorrmat.html) of [**ggstatsplot**](https://indrajeetpatil.github.io/ggstatsplot/index.html)
+- [`ggscatmat`](https://ggobi.github.io/ggally/reference/ggscatmat.html) and [`ggpairs`](https://ggobi.github.io/ggally/reference/ggpairs.html) of [**GGally**](https://ggobi.github.io/ggally/index.html)
+- [**corrplot**](https://cran.r-project.org/web/packages/corrplot/index.html)
+- [**corrgram**](https://cran.r-project.org/web/packages/corrgram/index.html)

@@ -33,6 +33,16 @@ website:
             href: Hands_on_Ex04_4.qmd
           - text: "5a. Creating Ternary Plot with R"
             href: Hands_on_Ex05_1.qmd
+          - text: "5b. Visual Correlation Analysis"
+            href: Hands_on_Ex05_2.qmd
+          - text: "5c. Heatmap for Visualising and Analysing Multivariate Data"
+            href: Hands_on_Ex05_3.qmd
+          - text: "5d. Visual Multivariate Analysis with Parallel Coordinates Plot"
+            href: Hands_on_Ex05_4.qmd
+          - text: "5e. Treemap Visualisation with R"
+            href: Hands_on_Ex05_5.qmd
+            
+            
             
             
           

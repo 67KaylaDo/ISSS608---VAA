@@ -1,0 +1,10 @@
+---
+title: "Heatmap for Visualising and Analysing Multivariate Data"
+date: "2026-05-10"
+date-modified: "last-modified"
+execute:
+  eval: true
+  echo: true
+  warning: false
+  freeze: true
+---
