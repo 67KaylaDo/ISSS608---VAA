@@ -42,7 +42,7 @@ website:
           - text: "5e. Treemap Visualisation with R"
             href: Hands_on_Ex05_5.qmd
         - text: "Take-home Exercise"
-        menu:
+        
             
             
             
