@@ -2,7 +2,6 @@
 project:
   type: website
   output-dir: _site
-
 website:
   title: |
     <img src="Hands-on Exercises/Hands-on W1/Mario 6.png" height="40" style="vertical-align:middle; margin-right:10px;">
@@ -42,10 +41,14 @@ website:
           - text: "5e. Treemap Visualisation with R"
             href: Hands_on_Ex05_5.qmd
 
-            
-            
-            
-          
+      - text: "Take-home Exercise"
+        menu:
+          - text: "--- Take-home Exercise 1 ---"
+          - text: "Technical Report"
+            href: Take_home_Ex01_technical.qmd
+          - text: "Executive Summary"
+            href: Take_home_Ex01_executive.qmd
+
     right:
       - href: index.qmd
         text: Home
@@ -59,7 +62,7 @@ format:
     toc: true
     code-fold: true
     code-summary: "Show code block"
-    
+
 execute:
   warning: false
   message: false
@@ -68,5 +71,4 @@ execute:
   fig-height: 9
   fig-align: center
   out-width: "100%"
-
 editor: visual
