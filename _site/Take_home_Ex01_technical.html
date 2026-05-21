@@ -252,13 +252,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#bivariate-visual-analytics" id="toc-bivariate-visual-analytics" class="nav-link" data-scroll-target="#bivariate-visual-analytics">4. Bivariate Visual Analytics</a>
   <ul class="collapse">
-<<<<<<< Updated upstream
-  <li><a href="#profitability-analysis-loss-ratio" id="toc-profitability-analysis-loss-ratio" class="nav-link" data-scroll-target="#profitability-analysis-loss-ratio">Profitability Analysis — Loss Ratio</a></li>
-  <li><a href="#volatility-analysis-claim-frequency-and-severity" id="toc-volatility-analysis-claim-frequency-and-severity" class="nav-link" data-scroll-target="#volatility-analysis-claim-frequency-and-severity">Volatility Analysis — Claim Frequency and Severity</a></li>
-  <li><a href="#temporal-analysis" id="toc-temporal-analysis" class="nav-link" data-scroll-target="#temporal-analysis">Temporal Analysis</a></li>
-  </ul></li>
-  <li><a href="#bonus-alluvial-diagram-risk-flow-through-the-portfolio" id="toc-bonus-alluvial-diagram-risk-flow-through-the-portfolio" class="nav-link" data-scroll-target="#bonus-alluvial-diagram-risk-flow-through-the-portfolio">Bonus: Alluvial Diagram — Risk Flow Through the Portfolio</a></li>
-=======
   <li><a href="#exposure-weighted-segment-scorecard" id="toc-exposure-weighted-segment-scorecard" class="nav-link" data-scroll-target="#exposure-weighted-segment-scorecard">4.1 Exposure-Weighted Segment Scorecard</a></li>
   <li><a href="#profitability-analysis---loss-ratio" id="toc-profitability-analysis---loss-ratio" class="nav-link" data-scroll-target="#profitability-analysis---loss-ratio">4.2 Profitability Analysis - Loss Ratio</a></li>
   <li><a href="#volatility-analysis---claim-frequency-and-severity" id="toc-volatility-analysis---claim-frequency-and-severity" class="nav-link" data-scroll-target="#volatility-analysis---claim-frequency-and-severity">4.3 Volatility Analysis - Claim Frequency and Severity</a></li>
@@ -269,7 +262,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#risk-flow-through-the-portfolio" id="toc-risk-flow-through-the-portfolio" class="nav-link" data-scroll-target="#risk-flow-through-the-portfolio">5.1 Risk Flow Through the Portfolio</a></li>
   <li><a href="#visual-model-of-claim-propensity" id="toc-visual-model-of-claim-propensity" class="nav-link" data-scroll-target="#visual-model-of-claim-propensity">5.2 Visual Model of Claim Propensity</a></li>
   </ul></li>
->>>>>>> Stashed changes
   <li><a href="#conclusions" id="toc-conclusions" class="nav-link" data-scroll-target="#conclusions">Conclusions</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a>
   <ul class="collapse">
@@ -284,13 +276,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<<<<<<< Updated upstream
-<h1 class="title">Motor Vehicle Insurance Portfolio Report</h1>
-<p class="subtitle lead">ISSS608 Take-Home Exercise 1 — Technical Report</p>
-=======
 <h1 class="title">Motor Vehicle Insurance Portfolio Visual Analytics Report</h1>
 <p class="subtitle lead">ISSS608 Take-Home Exercise 1 - Technical Report</p>
->>>>>>> Stashed changes
 </div>
 
 
@@ -320,37 +307,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <section id="overview" class="level2">
-<<<<<<< Updated upstream
-<h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>This technical report applies visual analytics techniques to a real-world <strong>motor vehicle insurance portfolio</strong> dataset from a Spanish non-life insurer (sourced from Mendeley Data). The dataset contains approximately 354,000 policy-year records spanning 2022–2024.</p>
-<p>The two primary analytical objectives are:</p>
-<ol type="1">
-<li><strong>Univariate analysis</strong> — explore the distributions and characteristics of numerical and categorical variables across the portfolio.</li>
-<li><strong>Bivariate analysis</strong> — investigate and statistically validate factors that influence <strong>portfolio profitability</strong> (loss ratio) and <strong>volatility</strong> (claim frequency and severity).</li>
-</ol>
-<p>All visualisations are produced using <strong>ggplot2 and its extensions</strong>, with data processing performed via <strong>tidyverse</strong>. Statistical tests are embedded directly into plots using <strong>ggstatsplot</strong> wherever group comparisons are made.</p>
-=======
 <h2 class="anchored" data-anchor-id="overview">1. Overview</h2>
 <p>This technical report applies visual analytics techniques to a real-world <strong>motor vehicle insurance portfolio</strong> dataset from a Spanish non-life insurer (sourced from Mendeley Data). The dataset contains approximately 354,000 policy-year records spanning 2022-2024.</p>
 <p>The two primary analytical objectives are: - <strong>Univariate analysis</strong> - explore the distributions and characteristics of numerical and categorical variables across the portfolio. - <strong>Bivariate analysis</strong> - investigate and statistically validate factors that influence <strong>portfolio profitability</strong> (loss ratio) and <strong>volatility</strong> (claim frequency and severity).</p>
->>>>>>> Stashed changes
 <hr>
 </section>
 <section id="data-preparation" class="level2">
 <h2 class="anchored" data-anchor-id="data-preparation">2. Data Preparation</h2>
 <section id="approach" class="level3">
-<<<<<<< Updated upstream
-<h3 class="anchored" data-anchor-id="approach">Approach</h3>
-<p>Before any visual analysis can begin, the raw data must be aligned with the analytical requirements of an insurance portfolio study. Three preparation steps are critical:</p>
-<ul>
-<li><strong>Type conversion</strong> — several variables are stored as character codes in the source file and must be recoded as ordered or nominal factors with descriptive labels before they can be used meaningfully in visualisations.</li>
-<li><strong>Feature engineering</strong> — the three key actuarial performance metrics (loss ratio, claim frequency, claim severity) are not present in the raw data and must be derived.</li>
-<li><strong>Missing value assessment</strong> — the data dictionary flags <code>vehicle_value</code> as having some missing entries; these must be identified and handled appropriately before using that field in analysis.</li>
-</ul>
-=======
 <h3 class="anchored" data-anchor-id="approach">2.1 Approach</h3>
 <p>Before analysis, three preparatory steps were applied to the raw data: - <strong>Type conversion</strong>: Several variables are stored as numeric codes in the source file and were recoded as ordered or nominal factors with descriptive labels to support meaningful visualisation. - <strong>Feature engineering</strong>: 3 key actuarial performance metrics (loss ratio, claim frequency, claim severity) will be derived. - <strong>Missing value assessment</strong> - <strong>Missing values checking</strong></p>
->>>>>>> Stashed changes
 </section>
 <section id="loading-packages" class="level3">
 <h3 class="anchored" data-anchor-id="loading-packages">2.2. Loading Packages</h3>
@@ -965,13 +931,8 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </section>
 </section>
 <section id="univariate-visual-analytics" class="level2">
-<<<<<<< Updated upstream
-<h2 class="anchored" data-anchor-id="univariate-visual-analytics">Univariate Visual Analytics</h2>
-<p>This section examines each variable individually to understand the portfolio’s composition — the mix of coverage types, driver profiles, vehicle characteristics, and geographic spread — before moving to inter-variable comparisons.</p>
-=======
 <h2 class="anchored" data-anchor-id="univariate-visual-analytics">3. Univariate Visual Analytics</h2>
 <p>This section examines each variable individually to understand the portfolio’s composition: the mix of coverage types, driver profiles, vehicle characteristics, and geographic spread, before moving to inter-variable comparisons.</p>
->>>>>>> Stashed changes
 <section id="categorical-variables" class="level3">
 <h3 class="anchored" data-anchor-id="categorical-variables">3.1 Categorical Variables</h3>
 <section id="policy-and-insured-characteristics" class="level4">
@@ -1045,12 +1006,8 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: The portfolio is overwhelmingly composed of <strong>active policies</strong> (~85%) from the existing <strong>portfolio book</strong> rather than new business. Annual payment is dominant, and the majority of policyholders carry a <strong>“Good” bonus score</strong> — reflecting a generally well-seasoned, low-risk incumbent book.</p>
-=======
 <p><strong>Interpretation</strong>: The portfolio consists predominantly of <strong>active policies</strong> (89.2%) and annually-paying (81.3%) policies, reflecting a relatively clean operational structure. However, new business accounts for 69.3% of policy-years, which warrants caution when interpreting loss ratios — new business typically carries higher claim propensity due to the absence of renewal selection and policy seasoning effects, and profitability figures may not reflect long-run portfolio behaviour.</p>
 <p>The bonus-score distribution is heavily concentrated in <strong>“Good”</strong> risks (96.4%), with Neutral and Bad segments accounting for just 2.2% and 1.3% respectively. While this may reflect genuine portfolio quality, it severely limits the variable’s discriminatory power. Any comparison of loss experience across bonus-score categories should be treated with caution, as the exposure in non-Good segments is too thin for credible statistical inference.</p>
->>>>>>> Stashed changes
 </section>
 <section id="vehicle-and-geographic-characteristics" class="level4">
 <h4 class="anchored" data-anchor-id="vehicle-and-geographic-characteristics">3.1.2 Vehicle and Geographic Characteristics</h4>
@@ -1074,38 +1031,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </section>
-<<<<<<< Updated upstream
-<section id="vehicle-brand-composition-treemap" class="level4">
-<h4 class="anchored" data-anchor-id="vehicle-brand-composition-treemap">Vehicle Brand Composition — Treemap</h4>
-<p>With over 30 distinct vehicle brands in the portfolio, a treemap is more legible than a long bar chart. Cell area is proportional to policy count and the colour gradient reinforces the same quantity, making it immediately clear which brands constitute material exposure concentrations versus niche segments.</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Show code block</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>brand_counts <span class="ot">&lt;-</span> motor <span class="sc">|&gt;</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(vehicle_brand, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">25</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pct =</span> n <span class="sc">/</span> <span class="fu">nrow</span>(motor))</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  brand_counts,</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">area  =</span> n,</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">fill  =</span> n,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">label =</span> <span class="fu">paste0</span>(vehicle_brand, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, <span class="fu">comma</span>(n)))</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_treemap</span>(<span class="at">colour =</span> <span class="st">"white"</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_treemap_text</span>(</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">colour =</span> <span class="st">"white"</span>, <span class="at">place =</span> <span class="st">"centre"</span>,</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">11</span>, <span class="at">reflow =</span> <span class="cn">TRUE</span></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">low  =</span> <span class="st">"#B3CDE3"</span>, <span class="at">high =</span> <span class="st">"#08519C"</span>,</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Policies"</span>, <span class="at">labels =</span> comma</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Top 25 Vehicle Brands by Policy Count"</span>,</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Volkswagen, Seat, and Renault dominate — consistent with Spanish new-car market share"</span></span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-=======
 <section id="vehicle-brand-composition---treemap" class="level4">
 <h4 class="anchored" data-anchor-id="vehicle-brand-composition---treemap">3.1.3 Vehicle Brand Composition - Treemap</h4>
 <p>A treemap is appropriate for vehicle brand because there are many categories; area makes the dominant exposure concentrations visible without requiring a long ranked bar chart.</p>
@@ -1136,7 +1061,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Top 25 Vehicle Brands by Policy Count"</span>,</span>
 <span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Renault, Citroen, Peugeot, Volkswagen, Ford, Opel, and Seat form the main exposure base"</span></span>
 <span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
->>>>>>> Stashed changes
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1153,29 +1077,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <section id="numerical-variables" class="level3">
 <h3 class="anchored" data-anchor-id="numerical-variables">3.2 Numerical Variables</h3>
 <section id="premium-distribution" class="level4">
-<<<<<<< Updated upstream
-<h4 class="anchored" data-anchor-id="premium-distribution">Premium Distribution</h4>
-<p>Most insurance premium distributions are right-skewed because a small proportion of high-risk or high-value policies attract substantially elevated premiums. A histogram overlaid with a density curve simultaneously reveals the mode, the degree of skew, and the extent of the upper tail — information that a simple mean or median cannot convey.</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Show code block</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>motor <span class="sc">|&gt;</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(total_premium <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>         total_premium <span class="sc">&lt;</span> <span class="fu">quantile</span>(total_premium, <span class="fl">0.99</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> total_premium)) <span class="sc">+</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">y =</span> <span class="fu">after_stat</span>(density)),</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">bins  =</span> <span class="dv">80</span>, <span class="at">fill =</span> <span class="st">"#1565C0"</span>, <span class="at">alpha =</span> <span class="fl">0.6</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">colour =</span> <span class="st">"#0D47A1"</span>, <span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>(<span class="at">prefix =</span> <span class="st">"EUR "</span>)) <span class="sc">+</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Distribution of Total Premium (capped at 99th percentile)"</span>,</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Right-skewed; most policies pay under EUR 800/year — COMP covers drive the upper tail"</span>,</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"Total Annual Premium (EUR)"</span>,</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="st">"Density"</span></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-=======
 <h4 class="anchored" data-anchor-id="premium-distribution">3.2.1 Premium Distribution</h4>
 <p>Most insurance premium distributions are right-skewed because a small proportion of high-risk or high-value policies attract substantially elevated premiums. The histogram shows the mass of annual premium levels, while the density overlay makes the skewness and possible multiple peaks easier to see.</p>
 <div class="cell">
@@ -1193,11 +1094,10 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>(<span class="at">prefix =</span> <span class="st">"EUR "</span>)) <span class="sc">+</span></span>
 <span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
 <span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Distribution of Total Premium (capped at 99th percentile)"</span>,</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Right-skewed; most policies pay under EUR 800/year - COMP covers drive the upper tail"</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Right-skewed; most policies pay under EUR 800/year — COMP covers drive the upper tail"</span>,</span>
 <span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"Total Annual Premium (EUR)"</span>,</span>
 <span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="st">"Density"</span></span>
 <span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
->>>>>>> Stashed changes
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -1245,16 +1145,8 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: The distribution is heavily <strong>zero-inflated</strong> — the large mass at zero reflects the majority of policies that incur no claims — and exhibits a long right tail driven by a minority of policies with large individual losses. The Wilcoxon test confirms the median loss ratio is significantly below 1, indicating the portfolio is profitable at an aggregate level.</p>
-</section>
-<section id="driver-and-vehicle-characteristics-ridgeline-plots" class="level4">
-<h4 class="anchored" data-anchor-id="driver-and-vehicle-characteristics-ridgeline-plots">Driver and Vehicle Characteristics — Ridgeline Plots</h4>
-<p>Comparing the shape of a distribution across multiple groups simultaneously is essential for detecting risk segmentation opportunities. Ridgeline density plots stack multiple density curves in a compact layout, making it possible to spot shifts in the centre, spread, and modality of distributions across years or coverage classes in a single panel.</p>
-=======
 <p><strong>Interpretation</strong>: The distribution is heavily <strong>zero-inflated</strong> - the large mass at zero reflects the majority of policies that incur no claims, and exhibits a long right tail driven by a minority of policies with large individual losses. The Wilcoxon test confirms that the typical policy-year sits below break-even, but aggregate profitability should be read from the portfolio loss ratio itself: incurred losses are about 70% of premium, leaving the book profitable while still exposed to tail volatility.</p>
 <p>From an insurance and reinsurance perspective, the zero mass and long right tail must be read together. The portfolio can be profitable on average while still exposing the insurer to retained earnings volatility if a small number of claim-bearing policy-years dominate incurred losses. The diagnostics below therefore separate attritional behaviour from large-loss concentration before moving into segment comparisons.</p>
->>>>>>> Stashed changes
 <div class="cell">
 <details class="code-fold">
 <summary>Show code block</summary>
@@ -1467,38 +1359,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: Comprehensive policies (COMP_E, COMP_N) insure <strong>newer and higher-value vehicles</strong>, which explains their elevated premium structure. Basic TP policies cluster around older, lower-value vehicles — a structurally different risk pool that should be priced and reserved separately.</p>
-</section>
-<section id="claim-severity-distribution-by-policy-type" class="level4">
-<h4 class="anchored" data-anchor-id="claim-severity-distribution-by-policy-type">Claim Severity Distribution by Policy Type</h4>
-<p>Understanding how claim costs are distributed — not just their average — is essential for reserving and reinsurance decisions. A combined half-density and boxplot reveals both the shape of the severity distribution and its key quantiles, exposing whether the upper tail is driven by a few catastrophic events or a broad spread of costly claims.</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Show code block</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>motor <span class="sc">|&gt;</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(claim_sev), claim_sev <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>         claim_sev <span class="sc">&lt;</span> <span class="fu">quantile</span>(claim_sev, <span class="fl">0.975</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> claim_sev, <span class="at">y =</span> policy_type,</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">fill =</span> policy_type, <span class="at">colour =</span> policy_type)) <span class="sc">+</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">adjust =</span> <span class="fl">0.5</span>, <span class="at">width =</span> <span class="fl">0.6</span>,</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">justification =</span> <span class="sc">-</span><span class="fl">0.3</span>, <span class="at">.width =</span> <span class="dv">0</span>, <span class="at">point_colour =</span> <span class="cn">NA</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">width      =</span> <span class="fl">0.15</span>, <span class="at">outlier.shape =</span> <span class="cn">NA</span>,</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill       =</span> <span class="st">"white"</span>, <span class="at">colour =</span> <span class="st">"black"</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"Set2"</span>, <span class="at">guide =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_brewer</span>(<span class="at">palette =</span> <span class="st">"Set2"</span>, <span class="at">guide =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>(<span class="at">prefix =</span> <span class="st">"EUR "</span>)) <span class="sc">+</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Claim Severity Distribution by Policy Type"</span>,</span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Comprehensive policies carry heavier right tails — large individual losses are more common"</span>,</span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"Average Incurred Cost per Claim (EUR)"</span>,</span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="st">"Policy Type"</span></span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-=======
 <p><strong>Interpretation</strong>: Comprehensive policies (COMP_E and COMP_N) are predominantly associated with newer and higher-value vehicles, consistent with the rational economic behaviour of owners seeking to protect assets with meaningful residual value. This explains their elevated premium structure, but it also implies higher average claim severity, as newer vehicles carry greater parts and repair costs, and total loss settlements are more expensive. Reserving assumptions for this segment should reflect current vehicle values rather than portfolio-wide averages.</p>
 <p>Basic TP and TPG policies, by contrast, cluster around older and lower-value vehicles, representing a structurally different risk pool in terms of both exposure and claim economics. While average severity per claim is lower, older vehicles may contribute to higher at-fault frequency through mechanical reliability issues, and their lower insured values reduce the deterrent effect of financial loss on driver behaviour. These two segments should be priced, reserved, and monitored separately, pooling them with comprehensive policies in aggregate analysis risks cross-subsidisation and masks divergent loss trends that would otherwise be actionable.</p>
 </section>
@@ -1530,17 +1390,12 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"Average Incurred Cost per Claim (EUR)"</span>,</span>
 <span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="st">"Policy Type"</span></span>
 <span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
->>>>>>> Stashed changes
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="Take_home_Ex01_technical_files/figure-html/raincloud-severity-1.png" class="img-fluid figure-img" width="1440"></p>
-<<<<<<< Updated upstream
-<figcaption>Claim severity distribution by policy type — COMP covers show higher and more variable costs</figcaption>
-=======
 <figcaption>Claim severity distribution by policy type - right-skewed costs and uneven upper tails</figcaption>
->>>>>>> Stashed changes
 </figure>
 </div>
 </div>
@@ -1556,16 +1411,9 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <blockquote class="blockquote">
 <p><strong>Sampling note</strong>: Plots using <code>ggbetweenstats()</code> draw a reproducible sample of 50,000 records (<code>set.seed(42)</code>) for rendering performance. Aggregate statistics quoted in the text are computed from the full 354,000-row dataset.</p>
 </blockquote>
-<<<<<<< Updated upstream
-<section id="profitability-analysis-loss-ratio" class="level3">
-<h3 class="anchored" data-anchor-id="profitability-analysis-loss-ratio">Profitability Analysis — Loss Ratio</h3>
-<section id="loss-ratio-by-policy-type" class="level4">
-<h4 class="anchored" data-anchor-id="loss-ratio-by-policy-type">Loss Ratio by Policy Type</h4>
-=======
 <section id="exposure-weighted-segment-scorecard" class="level3">
 <h3 class="anchored" data-anchor-id="exposure-weighted-segment-scorecard">4.1 Exposure-Weighted Segment Scorecard</h3>
 <p>Policy-level averages can be misleading in insurance because exposure varies across cancelled and short-duration policies. The scorecard below aggregates premium, incurred loss, claims, and exposure by key underwriting cells. It ranks segments by <em>excess incurred loss</em> above the portfolio loss ratio benchmark.</p>
->>>>>>> Stashed changes
 <div class="cell">
 <details class="code-fold">
 <summary>Show code block</summary>
@@ -1801,11 +1649,7 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: The Kruskal-Wallis test confirms statistically significant differences across all policy types. Comprehensive policies (COMP_E, COMP_N) carry the highest median loss ratios, consistent with their broader coverage scope — any damage to the insured vehicle is covered, not just third-party liability. Basic TP policies show lower and more tightly concentrated losses.</p>
-=======
 <p><strong>Interpretation</strong>: The Kruskal-Wallis test confirms that loss-ratio distributions differ by policy type, although the test does not imply every pair of policy types is materially different. The aggregate pattern is strongest for comprehensive covers: COMP_N has the highest aggregate loss ratio and COMP_E is also above the narrower TP/CC covers. Because policy-level medians are pulled to zero by no-claim records, the underwriting story should rely on aggregate LR, mean LR, claim frequency, and tail shape rather than median LR alone.</p>
->>>>>>> Stashed changes
 </section>
 <section id="loss-ratio-by-bonus-score" class="level4">
 <h4 class="anchored" data-anchor-id="loss-ratio-by-bonus-score">4.2.2 Loss Ratio by Bonus Score</h4>
@@ -1837,19 +1681,11 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: All pairwise comparisons are statistically significant (Holm-adjusted p &lt; 0.05), confirming that the bonus-malus system successfully stratifies policyholders by underlying risk. Policyholders with a “Bad” claims history generate materially higher losses — this signal should be reflected in pricing and underwriting decisions.</p>
-</section>
-<section id="loss-ratio-by-driver-age-trend-and-volatility" class="level4">
-<h4 class="anchored" data-anchor-id="loss-ratio-by-driver-age-trend-and-volatility">Loss Ratio by Driver Age — Trend and Volatility</h4>
-<p>Driver age is a fundamental underwriting variable. Beyond the mean loss ratio by age band, the coefficient of variation (CV = standard deviation / mean) measures how <em>unpredictable</em> outcomes are within each group — a critical input for pricing uncertainty and capital allocation.</p>
-=======
 <p><strong>Interpretation</strong>: The bonus-malus groups differ statistically, but the practical signal is clearer for claim occurrence and frequency than for raw aggregate loss ratio. Good risks have the lowest aggregate LR and claim rate, while Neutral and Bad risks are both adverse; Bad risks show the highest claim frequency and severity even though Neutral produces the highest aggregate LR in this sample. This supports retaining bonus score as a rating variable, while avoiding an over-simple Good &lt; Neutral &lt; Bad loss-ratio narrative.</p>
 </section>
 <section id="loss-ratio-by-driver-age---trend-and-volatility" class="level4">
 <h4 class="anchored" data-anchor-id="loss-ratio-by-driver-age---trend-and-volatility">4.2.3 Loss Ratio by Driver Age - Trend and Volatility</h4>
-<p>Driver age is a fundamental underwriting variable. Beyond the mean loss ratio by age band, the coefficient of variation (CV = standard deviation / mean) measures how <em>unpredictable</em> outcomes are within each group, a critical input for pricing uncertainty and capital allocation.</p>
->>>>>>> Stashed changes
+<p>Driver age is a fundamental underwriting variable. Beyond the mean loss ratio by age band, the coefficient of variation (CV = standard deviation / mean) measures how <em>unpredictable</em> outcomes are within each group — a critical input for pricing uncertainty and capital allocation.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show code block</summary>
@@ -1977,11 +1813,7 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: Island municipalities and urban circulation areas are associated with higher loss ratios. Island exposures may reflect less competitive repair markets and higher logistics costs. Urban driving correlates with greater claim frequency due to traffic density — a well-established pattern in motor insurance.</p>
-=======
 <p><strong>Interpretation</strong>: Urban circulation areas show a modestly higher loss ratio and materially higher claim frequency than rural areas, consistent with denser traffic exposure. Municipality type is less clean: Coastal and Island loss ratios are close to Inland overall, and the Island pattern is better described as year-to-year volatility than persistently higher loss cost. Geography is still useful, but it should be credibility-weighted rather than converted directly into raw territorial relativities.</p>
->>>>>>> Stashed changes
 </section>
 <section id="vehicle-value-vs-loss-ratio" class="level4">
 <h4 class="anchored" data-anchor-id="vehicle-value-vs-loss-ratio">4.2.5 Vehicle Value vs Loss Ratio</h4>
@@ -2022,24 +1854,15 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="Take_home_Ex01_technical_files/figure-html/biv-vval-lr-marginal-1.png" class="img-fluid figure-img" width="1440"></p>
-<<<<<<< Updated upstream
-<figcaption>Higher-value vehicles trend toward greater loss ratios — driven by elevated repair and replacement costs</figcaption>
-=======
 <figcaption>Vehicle value and loss ratio show a weak, non-linear relationship</figcaption>
->>>>>>> Stashed changes
 </figure>
 </div>
 </div>
 </div>
 <p><strong>Interpretation</strong>: Vehicle value should not be read as a simple linear driver of loss ratio in this portfolio. Higher-value vehicles do show higher claim frequency, but premiums and coverage mix offset part of the repair-cost effect, producing a weak and non-monotonic loss-ratio relationship. This makes vehicle value more useful as part of an interaction with policy type, deductible/excess, and repair-cost controls than as a standalone loading.</p>
 </section>
-<<<<<<< Updated upstream
-<section id="loss-ratio-distributions-by-policy-type-ridgeline-gradient" class="level4">
-<h4 class="anchored" data-anchor-id="loss-ratio-distributions-by-policy-type-ridgeline-gradient">Loss Ratio Distributions by Policy Type — Ridgeline Gradient</h4>
-=======
 <section id="loss-ratio-distributions-by-policy-type---ridgeline-gradient" class="level4">
 <h4 class="anchored" data-anchor-id="loss-ratio-distributions-by-policy-type---ridgeline-gradient">4.2.6 Loss Ratio Distributions by Policy Type - Ridgeline Gradient</h4>
->>>>>>> Stashed changes
 <p>A ridgeline plot with a diverging colour gradient (blue = low LR, red = LR &gt; 1) exposes differences in the <em>shape</em> of loss ratio distributions across policy types. This matters for reserving: two segments with the same mean loss ratio can have very different tail weights, implying different capital requirements.</p>
 <div class="cell">
 <details class="code-fold">
@@ -2074,11 +1897,7 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="Take_home_Ex01_technical_files/figure-html/ridgeline-lr-ptype-1.png" class="img-fluid figure-img" width="1440"></p>
-<<<<<<< Updated upstream
-<figcaption>COMP covers have substantially heavier right tails — more extreme loss events are possible</figcaption>
-=======
 <figcaption>Policy-type loss ratio distributions differ in both centre and tail shape</figcaption>
->>>>>>> Stashed changes
 </figure>
 </div>
 </div>
@@ -2086,19 +1905,11 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <p><strong>Interpretation</strong>: All five policy types show their mass concentrated well below the 100% break-even line, confirming that claim-free policy-years dominate across the entire portfolio, consistent with the zero-inflation observed earlier. However, the tails tell a more important story. Every policy type extends into loss-making territory beyond 100%, with some reaching 400–500%, indicating that when losses do occur, they can be severe multiples of the premium collected. This is the core reinsurance design problem: the portfolio is profitable on average but exposed to individual policy-years where losses far exceed premium. COMP_N shows the longest visible tail, extending furthest into red territory, which is consistent with its higher-value vehicle profile and greater claim severity potential. This segment represents the clearest case for reinsurance protection or conservative reserve loading. Critically, the near-identical shape of distributions across policy types, all sharply peaked near zero with similar tail behaviour, suggests that the key differentiator between segments is not the shape of the distribution but the frequency and magnitude of tail events. Segment-level profitability therefore hinges on how often these tail losses materialise, making claim frequency monitoring by policy type more actionable than average loss ratio comparisons alone.</p>
 </section>
 </section>
-<<<<<<< Updated upstream
-<section id="volatility-analysis-claim-frequency-and-severity" class="level3">
-<h3 class="anchored" data-anchor-id="volatility-analysis-claim-frequency-and-severity">Volatility Analysis — Claim Frequency and Severity</h3>
-<section id="claim-frequency-by-driver-age-band" class="level4">
-<h4 class="anchored" data-anchor-id="claim-frequency-by-driver-age-band">Claim Frequency by Driver Age Band</h4>
-<p>Claim frequency (claims per exposure unit) is a direct measure of how accident-prone a segment is, independent of repair costs. Tracking both the raw claim rate and the exposure-adjusted frequency captures two complementary aspects of segment risk.</p>
-=======
 <section id="volatility-analysis---claim-frequency-and-severity" class="level3">
 <h3 class="anchored" data-anchor-id="volatility-analysis---claim-frequency-and-severity">4.3 Volatility Analysis - Claim Frequency and Severity</h3>
 <section id="claim-severity-by-policy-type---statistical-validation" class="level4">
 <h4 class="anchored" data-anchor-id="claim-severity-by-policy-type---statistical-validation">4.3.1 Claim Severity by Policy Type - Statistical Validation</h4>
 <p>The raincloud plot earlier showed the shape of claim severity by policy type. Here the same comparison is validated statistically using a non-parametric test because severity is strongly right-skewed and heavy-tailed.</p>
->>>>>>> Stashed changes
 <div class="cell">
 <details class="code-fold">
 <summary>Show code block</summary>
@@ -2339,15 +2150,9 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 <p><strong>Interpretation</strong>: The data confirms the well-established actuarial pattern of age-related claim frequency, but the magnitude here is striking. Drivers aged 18-25 show a claim rate above 20% and a mean claim frequency approaching 75% of exposure, more than double the rate of the next age band and nearly three times that of the oldest drivers. From a pricing perspective, this gradient is clear and actionable: driver age should be a primary rating factor, and the 18-25 band warrants a material premium loading relative to the rest of the book. If this loading is absent or insufficient, the portfolio is cross-subsidising young drivers at the expense of older, lower-risk policyholders, a structural pricing problem that compounds over time as the mix of young drivers grows. The near-monotonic decline across all age bands also means there is no evidence of a late-age frequency uptick, which is sometimes observed in very elderly drivers. The 65+ segment remains the lowest-frequency group, suggesting the portfolio does not currently face elevated risk from older drivers, though severity for this group should be examined separately before drawing conclusions about their overall profitability.</p>
 </section>
-<<<<<<< Updated upstream
-<section id="bonus-score-and-claim-occurrence-chi-square-test" class="level4">
-<h4 class="anchored" data-anchor-id="bonus-score-and-claim-occurrence-chi-square-test">Bonus Score and Claim Occurrence — Chi-Square Test</h4>
-<p>A stacked bar chart with an embedded chi-square test assesses whether the proportion of policies that generate at least one claim differs significantly across bonus score groups — directly testing the discriminatory power of the bonus-malus classification.</p>
-=======
 <section id="fair-comparison-of-claim-frequency---funnel-plot" class="level4">
 <h4 class="anchored" data-anchor-id="fair-comparison-of-claim-frequency---funnel-plot">4.3.3 Fair Comparison of Claim Frequency - Funnel Plot</h4>
 <p>A funnel plot is useful when segment sizes are unequal. Small segments naturally show more random variation, while large segments should sit closer to the portfolio average. The plot below compares policy type × bonus score × driver age cells against approximate 95% and 99.8% control limits for exposure-adjusted claim frequency.</p>
->>>>>>> Stashed changes
 <div class="cell">
 <details class="code-fold">
 <summary>Show code block</summary>
@@ -2500,17 +2305,10 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: <code>loss_ratio</code> correlates negatively with <code>driver_age</code> — younger drivers incur proportionally higher losses. <code>vehicle_value</code> shows a positive correlation with loss ratio, consistent with higher repair and replacement costs. Notably, <code>claim_freq</code> and <code>claim_sev</code> are weakly correlated with each other, suggesting they are driven by different underlying risk factors and should be modelled separately in a frequency-severity framework.</p>
-</section>
-<section id="multivariate-risk-profiling-parallel-coordinates" class="level4">
-<h4 class="anchored" data-anchor-id="multivariate-risk-profiling-parallel-coordinates">Multivariate Risk Profiling — Parallel Coordinates</h4>
-=======
 <p><strong>Interpretation</strong>: The numerical correlations are statistically useful but mostly modest in practical size, apart from the mechanical link between claim frequency and loss ratio. <code>loss_ratio</code> is weakly lower for older drivers and weakly higher for vehicle value in the sampled matrix, but neither relationship is strong enough to justify a standalone pricing rule. <code>claim_freq</code> and <code>claim_sev</code> are only weakly correlated with each other, supporting a frequency-severity framework rather than a single aggregate loss model.</p>
 </section>
 <section id="multivariate-risk-profiling---parallel-coordinates" class="level4">
 <h4 class="anchored" data-anchor-id="multivariate-risk-profiling---parallel-coordinates">4.3.6 Multivariate Risk Profiling - Parallel Coordinates</h4>
->>>>>>> Stashed changes
 <p>Parallel coordinates allow patterns across six risk dimensions to be examined simultaneously without dimensionality reduction. Each line traces one policy from left to right across normalised axes. Colouring by bonus score reveals whether the “Bad” tier is systematically positioned in high-risk regions across multiple variables at once.</p>
 <div class="cell">
 <details class="code-fold">
@@ -2559,11 +2357,7 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: “Bad” bonus score policyholders (red) cluster at <strong>younger driver ages</strong>, <strong>lower driving experience</strong>, and <strong>higher loss ratios</strong> across the panel — confirming that the bonus-malus signal is not an isolated flag but reflects a genuine multivariate risk profile that spans several observable characteristics.</p>
-=======
 <p><strong>Interpretation</strong>: “Bad” bonus score policyholders (red) tend to appear more often in higher-risk regions of the panel, especially around younger/lower-experience profiles and higher loss-ratio paths. The plot is exploratory rather than causal, but it supports the view that bonus score is not an isolated label; it overlaps with other observable risk characteristics that should be checked together in pricing and underwriting review.</p>
->>>>>>> Stashed changes
 </section>
 </section>
 <section id="temporal-analysis" class="level3">
@@ -2634,52 +2428,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <li>The deterioration coincides with rapid growth, which is consistent with new business carrying higher loss propensity before seasoning. However, whether the 2024 uptick reflects a temporary new-business effect or a structural shift in claims experience cannot be determined from aggregate trends alone, segment and cohort-level analysis is needed to distinguish between the two.</li>
 </ul>
 </section>
-<<<<<<< Updated upstream
-<section id="loss-ratio-heatmap-year-segment" class="level4">
-<h4 class="anchored" data-anchor-id="loss-ratio-heatmap-year-segment">Loss Ratio Heatmap — Year × Segment</h4>
-<p>A tile heatmap displays aggregate loss ratio across two categorical dimensions simultaneously. The diverging colour scale (blue = low LR, red = high LR) immediately highlights which year-segment combinations are performing well or deteriorating — a view that would require many separate line charts to replicate.</p>
-<div class="cell">
-<details class="code-fold">
-<summary>Show code block</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>make_lr_heatmap <span class="ot">&lt;-</span> <span class="cf">function</span>(seg_var, title) {</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  motor <span class="sc">|&gt;</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="sc">!!</span><span class="fu">sym</span>(seg_var))) <span class="sc">|&gt;</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(year, <span class="sc">!!</span><span class="fu">sym</span>(seg_var)) <span class="sc">|&gt;</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">agg_lr =</span> <span class="fu">sum</span>(total_incurred) <span class="sc">/</span> <span class="fu">sum</span>(total_premium),</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">.groups =</span> <span class="st">"drop"</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> <span class="sc">!!</span><span class="fu">sym</span>(seg_var), <span class="at">fill =</span> agg_lr)) <span class="sc">+</span></span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_tile</span>(<span class="at">colour =</span> <span class="st">"white"</span>, <span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">percent</span>(agg_lr, <span class="fl">0.1</span>)),</span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">size =</span> <span class="fl">4.5</span>, <span class="at">fontface =</span> <span class="st">"bold"</span>) <span class="sc">+</span></span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_fill_gradient2</span>(</span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">low      =</span> <span class="st">"#1565C0"</span>,</span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">mid      =</span> <span class="st">"white"</span>,</span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">high     =</span> <span class="st">"#C62828"</span>,</span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">midpoint =</span> <span class="fl">0.5</span>,</span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">name     =</span> <span class="st">"Agg. LR"</span>,</span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">labels   =</span> percent</span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> title, <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">11</span>),</span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>      <span class="at">axis.text  =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">panel.grid =</span> <span class="fu">element_blank</span>()</span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>h1 <span class="ot">&lt;-</span> <span class="fu">make_lr_heatmap</span>(<span class="st">"policy_type"</span>,      <span class="st">"Year × Policy Type"</span>)</span>
-<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>h2 <span class="ot">&lt;-</span> <span class="fu">make_lr_heatmap</span>(<span class="st">"bonus_score"</span>,      <span class="st">"Year × Bonus Score"</span>)</span>
-<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>h3 <span class="ot">&lt;-</span> <span class="fu">make_lr_heatmap</span>(<span class="st">"municipality_type"</span>,<span class="st">"Year × Municipality"</span>)</span>
-<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>h4 <span class="ot">&lt;-</span> <span class="fu">make_lr_heatmap</span>(<span class="st">"circulation_area"</span>, <span class="st">"Year × Circulation Area"</span>)</span>
-<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>(h1 <span class="sc">|</span> h2) <span class="sc">/</span> (h3 <span class="sc">|</span> h4) <span class="sc">+</span></span>
-<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(</span>
-<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Aggregate Loss Ratio Heatmaps — Year vs. Key Segments"</span>,</span>
-<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">theme =</span> <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">15</span>))</span>
-<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-=======
 <section id="loss-ratio-heatmap---year-segment" class="level4">
 <h4 class="anchored" data-anchor-id="loss-ratio-heatmap---year-segment">4.4.2 Loss Ratio Heatmap - Year × Segment</h4>
 <p>A tile heatmap displays aggregate loss ratio across two categorical dimensions simultaneously. The diverging colour scale (blue = low LR, red = high LR) immediately highlights which year-segment combinations are performing well or deteriorating, a view that would require many separate line charts to replicate.</p>
@@ -2721,10 +2469,9 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <span id="cb42-33"><a href="#cb42-33" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-34"><a href="#cb42-34" aria-hidden="true" tabindex="-1"></a>(h1 <span class="sc">|</span> h2) <span class="sc">/</span> (h3 <span class="sc">|</span> h4) <span class="sc">+</span></span>
 <span id="cb42-35"><a href="#cb42-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(</span>
-<span id="cb42-36"><a href="#cb42-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Aggregate Loss Ratio Heatmaps - Year vs. Key Segments"</span>,</span>
+<span id="cb42-36"><a href="#cb42-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Aggregate Loss Ratio Heatmaps — Year vs. Key Segments"</span>,</span>
 <span id="cb42-37"><a href="#cb42-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">theme =</span> <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">15</span>))</span>
 <span id="cb42-38"><a href="#cb42-38" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
->>>>>>> Stashed changes
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -2735,26 +2482,16 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: COMP_N policies had the worst loss ratio in 2023 before improving in 2024 — possibly reflecting a corrective pricing action. “Bad” bonus score policies consistently exceed the portfolio average in every year. Island municipalities show the most erratic year-on-year variation, suggesting that small volume and geographic concentration amplify random fluctuations.</p>
-=======
 <p><strong>Interpretation</strong>: COMP_N is the most problematic policy type in the heatmap, with the highest aggregate LR in 2024 and a deterioration rather than a clean improvement. Bonus score also varies by year: Neutral is the worst cell in 2024, while Bad is adverse in 2023-2024 but not consistently above the portfolio average across all years. Island municipalities show the most erratic year-on-year movement, so the geographic story is more about volatility and credibility than a persistently higher Island loading.</p>
->>>>>>> Stashed changes
 <hr>
 </section>
 </section>
 </section>
-<<<<<<< Updated upstream
-<section id="bonus-alluvial-diagram-risk-flow-through-the-portfolio" class="level2">
-<h2 class="anchored" data-anchor-id="bonus-alluvial-diagram-risk-flow-through-the-portfolio">Bonus: Alluvial Diagram — Risk Flow Through the Portfolio</h2>
-<p>An alluvial (Sankey-style) diagram traces how policies flow across multiple categorical dimensions in a single visual. Unlike separate bar charts or cross-tabulations, it shows the <em>joint</em> distribution — which specific combinations of business type, bonus score, and claim outcome are most common — making it possible to identify the exact pathways through which claim volume concentrates in the portfolio.</p>
-=======
 <section id="additional-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="additional-analysis">5. Additional Analysis:</h2>
 <section id="risk-flow-through-the-portfolio" class="level3">
 <h3 class="anchored" data-anchor-id="risk-flow-through-the-portfolio">5.1 Risk Flow Through the Portfolio</h3>
 <p>An alluvial (Sankey-style) diagram traces how policies flow across multiple categorical dimensions in a single visual. This would help identify the exact pathways through which claim volume concentrates in the portfolio.</p>
->>>>>>> Stashed changes
 <div class="cell">
 <details class="code-fold">
 <summary>Show code block</summary>
@@ -2807,10 +2544,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
-<p><strong>Interpretation</strong>: Portfolio policies with a “Good” bonus score dominate the no-claim stream — this is the low-risk core of the book. New Business policies with “Bad” bonus scores contribute a disproportionate share of claim events relative to their volume, signalling that new business underwriting controls need tightening for this risk segment.</p>
-<hr>
-=======
 <p><strong>Interpretation</strong>: Good bonus-score policies dominate the no-claim stream because they dominate the portfolio by volume. The more critical insight is in the smaller flows: Bad and Neutral bonus tiers generate higher claim rates, and existing Portfolio business with Bad bonus has a particularly high claim occurrence rate. New Business Bad risks still contribute slightly more claim events than their policy share, but the alluvial chart should be read as a screening view; rate-based tables are needed before tightening new-business rules broadly.</p>
 </section>
 <section id="visual-model-of-claim-propensity" class="level3">
@@ -2895,7 +2628,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </div>
 <p><strong>Interpretation</strong>: The model view confirms that several visual patterns remain after adjustment. Policy type is the strongest adjusted claim-propensity signal, especially COMP_N and COMP_E relative to TP. Poorer bonus history and younger driver age also continue to raise claim odds, while New Business has lower adjusted claim odds than Portfolio business in this sample. This strengthens the bivariate findings, but it should still be treated as a diagnostic model rather than a production pricing model.</p>
 </section>
->>>>>>> Stashed changes
 </section>
 <section id="conclusions" class="level2">
 <h2 class="anchored" data-anchor-id="conclusions">Conclusions</h2>
@@ -2917,11 +2649,7 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </tr>
 <tr class="even">
 <td><strong>Young drivers</strong></td>
-<<<<<<< Updated upstream
-<td>The 18–25 age band has the highest loss ratio, claim rate, and volatility — the most critical underwriting risk factor in the portfolio</td>
-=======
 <td>The 18-25 age band has the highest claim rate and frequency, but not the highest aggregate LR; it is primarily a frequency-risk segment</td>
->>>>>>> Stashed changes
 </tr>
 <tr class="odd">
 <td><strong>Geography</strong></td>
@@ -2941,9 +2669,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 </tr>
 <tr class="odd">
 <td><strong>Volatility</strong></td>
-<<<<<<< Updated upstream
-<td>COMP policies exhibit heavier right-tailed claim severity distributions — catastrophic individual losses are materially more likely in comprehensive coverage classes</td>
-=======
 <td>Large-loss burden is distributed across several policy types: CC contributes the largest incurred share, COMP_E contains the maximum observed policy-year loss, and TPG has high excess-layer sensitivity</td>
 </tr>
 <tr class="even">
@@ -2957,7 +2682,6 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <tr class="even">
 <td><strong>Reinsurance lens</strong></td>
 <td>The portfolio is profitable but tail-sensitive; excess-of-loss protection is conceptually more targeted than quota share, subject to claim-level treaty pricing data</td>
->>>>>>> Stashed changes
 </tr>
 </tbody>
 </table>

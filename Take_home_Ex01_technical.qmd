@@ -1,11 +1,6 @@
 ---
-<<<<<<< Updated upstream
-title: "Motor Vehicle Insurance Portfolio Report"
-subtitle: "ISSS608 Take-Home Exercise 1 — Technical Report"
-=======
 title: "Motor Vehicle Insurance Portfolio Visual Analytics Report"
 subtitle: "ISSS608 Take-Home Exercise 1 - Technical Report"
->>>>>>> Stashed changes
 date: "2026-05-10"
 date-modified: "last-modified"
 execute:
@@ -37,16 +32,7 @@ theme_set(
 
 This technical report applies visual analytics techniques to a real-world **motor vehicle insurance portfolio** dataset from a Spanish non-life insurer (sourced from Mendeley Data). The dataset contains approximately 354,000 policy-year records spanning 2022-2024.
 
-<<<<<<< Updated upstream
-The two primary analytical objectives are:
-
-1.  **Univariate analysis** — explore the distributions and characteristics of numerical and categorical variables across the portfolio.
-2.  **Bivariate analysis** — investigate and statistically validate factors that influence **portfolio profitability** (loss ratio) and **volatility** (claim frequency and severity).
-
-All visualisations are produced using **ggplot2 and its extensions**, with data processing performed via **tidyverse**. Statistical tests are embedded directly into plots using **ggstatsplot** wherever group comparisons are made.
-=======
 The two primary analytical objectives are: - **Univariate analysis** - explore the distributions and characteristics of numerical and categorical variables across the portfolio. - **Bivariate analysis** - investigate and statistically validate factors that influence **portfolio profitability** (loss ratio) and **volatility** (claim frequency and severity).
->>>>>>> Stashed changes
 
 ------------------------------------------------------------------------
 
@@ -59,15 +45,7 @@ Before analysis, three preparatory steps were applied to the raw data:
 - **Feature engineering**: 3 key actuarial performance metrics (loss ratio, claim frequency, claim severity) will be derived. - **Missing value assessment** 
 - **Missing values checking**
 
-<<<<<<< Updated upstream
--   **Type conversion** — several variables are stored as character codes in the source file and must be recoded as ordered or nominal factors with descriptive labels before they can be used meaningfully in visualisations.
--   **Feature engineering** — the three key actuarial performance metrics (loss ratio, claim frequency, claim severity) are not present in the raw data and must be derived.
--   **Missing value assessment** — the data dictionary flags `vehicle_value` as having some missing entries; these must be identified and handled appropriately before using that field in analysis.
-
-### Loading Packages
-=======
 ### 2.2. Loading Packages
->>>>>>> Stashed changes
 
 ```{r}
 #| label: load-packages
@@ -435,11 +413,7 @@ component_summary |>
 
 ## 3. Univariate Visual Analytics
 
-<<<<<<< Updated upstream
-This section examines each variable individually to understand the portfolio's composition — the mix of coverage types, driver profiles, vehicle characteristics, and geographic spread — before moving to inter-variable comparisons.
-=======
 This section examines each variable individually to understand the portfolio's composition: the mix of coverage types, driver profiles, vehicle characteristics, and geographic spread, before moving to inter-variable comparisons.
->>>>>>> Stashed changes
 
 ### 3.1 Categorical Variables
 
@@ -504,11 +478,7 @@ p4 <- make_bar("bonus_score",       "Bonus Score",       "Purples")
   )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: The portfolio is overwhelmingly composed of **active policies** (\~85%) from the existing **portfolio book** rather than new business. Annual payment is dominant, and the majority of policyholders carry a **"Good" bonus score** — reflecting a generally well-seasoned, low-risk incumbent book.
-=======
 **Interpretation**: The portfolio consists predominantly of **active policies** (89.2%) and annually-paying (81.3%) policies, reflecting a relatively clean operational structure. However, new business accounts for 69.3% of policy-years, which warrants caution when interpreting loss ratios — new business typically carries higher claim propensity due to the absence of renewal selection and policy seasoning effects, and profitability figures may not reflect long-run portfolio behaviour.
->>>>>>> Stashed changes
 
 The bonus-score distribution is heavily concentrated in **"Good"** risks (96.4%), with Neutral and Bad segments accounting for just 2.2% and 1.3% respectively. While this may reflect genuine portfolio quality, it severely limits the variable's discriminatory power. Any comparison of loss experience across bonus-score categories should be treated with caution, as the exposure in non-Good segments is too thin for credible statistical inference.
 
@@ -528,11 +498,7 @@ p7 <- make_bar("circulation_area",  "Circulation Area",  "Purples")
 p5 | p6 | p7
 ```
 
-<<<<<<< Updated upstream
-#### Vehicle Brand Composition — Treemap
-=======
 #### 3.1.3 Vehicle Brand Composition - Treemap
->>>>>>> Stashed changes
 
 A treemap is appropriate for vehicle brand because there are many categories; area makes the dominant exposure concentrations visible without requiring a long ranked bar chart.
 
@@ -563,11 +529,7 @@ ggplot(
   ) +
   labs(
     title    = "Top 25 Vehicle Brands by Policy Count",
-<<<<<<< Updated upstream
-    subtitle = "Volkswagen, Seat, and Renault dominate — consistent with Spanish new-car market share"
-=======
     subtitle = "Renault, Citroen, Peugeot, Volkswagen, Ford, Opel, and Seat form the main exposure base"
->>>>>>> Stashed changes
   )
 ```
 
@@ -577,11 +539,7 @@ ggplot(
 
 #### 3.2.1 Premium Distribution
 
-<<<<<<< Updated upstream
-Most insurance premium distributions are right-skewed because a small proportion of high-risk or high-value policies attract substantially elevated premiums. A histogram overlaid with a density curve simultaneously reveals the mode, the degree of skew, and the extent of the upper tail — information that a simple mean or median cannot convey.
-=======
 Most insurance premium distributions are right-skewed because a small proportion of high-risk or high-value policies attract substantially elevated premiums. The histogram shows the mass of annual premium levels, while the density overlay makes the skewness and possible multiple peaks easier to see.
->>>>>>> Stashed changes
 
 ```{r}
 #| label: num-premium
@@ -638,15 +596,9 @@ gghistostats(
 )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: The distribution is heavily **zero-inflated** — the large mass at zero reflects the majority of policies that incur no claims — and exhibits a long right tail driven by a minority of policies with large individual losses. The Wilcoxon test confirms the median loss ratio is significantly below 1, indicating the portfolio is profitable at an aggregate level.
-
-#### Driver and Vehicle Characteristics — Ridgeline Plots
-=======
 **Interpretation**: The distribution is heavily **zero-inflated** - the large mass at zero reflects the majority of policies that incur no claims, and exhibits a long right tail driven by a minority of policies with large individual losses. The Wilcoxon test confirms that the typical policy-year sits below break-even, but aggregate profitability should be read from the portfolio loss ratio itself: incurred losses are about 70% of premium, leaving the book profitable while still exposed to tail volatility.
 
 From an insurance and reinsurance perspective, the zero mass and long right tail must be read together. The portfolio can be profitable on average while still exposing the insurer to retained earnings volatility if a small number of claim-bearing policy-years dominate incurred losses. The diagnostics below therefore separate attritional behaviour from large-loss concentration before moving into segment comparisons.
->>>>>>> Stashed changes
 
 ```{r}
 #| label: reinsurance-tail-summary
@@ -788,21 +740,10 @@ p_vval <- motor |>
 p_vage | p_vval
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: Comprehensive policies (COMP_E, COMP_N) insure **newer and higher-value vehicles**, which explains their elevated premium structure. Basic TP policies cluster around older, lower-value vehicles — a structurally different risk pool that should be priced and reserved separately.
-=======
 **Interpretation**: Comprehensive policies (COMP_E and COMP_N) are predominantly associated with newer and higher-value vehicles, consistent with the rational economic behaviour of owners seeking to protect assets with meaningful residual value. This explains their elevated premium structure, but it also implies higher average claim severity, as newer vehicles carry greater parts and repair costs, and total loss settlements are more expensive. Reserving assumptions for this segment should reflect current vehicle values rather than portfolio-wide averages.
->>>>>>> Stashed changes
 
 Basic TP and TPG policies, by contrast, cluster around older and lower-value vehicles, representing a structurally different risk pool in terms of both exposure and claim economics. While average severity per claim is lower, older vehicles may contribute to higher at-fault frequency through mechanical reliability issues, and their lower insured values reduce the deterrent effect of financial loss on driver behaviour. These two segments should be priced, reserved, and monitored separately, pooling them with comprehensive policies in aggregate analysis risks cross-subsidisation and masks divergent loss trends that would otherwise be actionable.
 
-<<<<<<< Updated upstream
-Understanding how claim costs are distributed — not just their average — is essential for reserving and reinsurance decisions. A combined half-density and boxplot reveals both the shape of the severity distribution and its key quantiles, exposing whether the upper tail is driven by a few catastrophic events or a broad spread of costly claims.
-
-```{r}
-#| label: raincloud-severity
-#| fig-cap: "Claim severity distribution by policy type — COMP covers show higher and more variable costs"
-=======
 #### 3.2.4 Claim Severity Distribution by Policy Type
 
 Understanding how claim costs are distributed matters for two core business decisions: how much to reserve for outstanding claims, and where to set reinsurance attachment points. The half-eye and boxplot combination is used because severity is skewed: it shows the full distribution shape while still retaining familiar median and interquartile-range summaries.
@@ -810,7 +751,6 @@ Understanding how claim costs are distributed matters for two core business deci
 ```{r}
 #| label: raincloud-severity
 #| fig-cap: "Claim severity distribution by policy type - right-skewed costs and uneven upper tails"
->>>>>>> Stashed changes
 #| fig-height: 7
 
 motor |>
@@ -831,11 +771,7 @@ motor |>
   scale_x_continuous(labels = dollar_format(prefix = "EUR ")) +
   labs(
     title    = "Claim Severity Distribution by Policy Type",
-<<<<<<< Updated upstream
-    subtitle = "Comprehensive policies carry heavier right tails — large individual losses are more common",
-=======
     subtitle = "Severity is right-skewed in every policy type; upper-tail behaviour differs more than the medians",
->>>>>>> Stashed changes
     x        = "Average Incurred Cost per Claim (EUR)",
     y        = "Policy Type"
   )
@@ -851,11 +787,7 @@ All group comparisons use non-parametric Kruskal-Wallis and Dunn tests because t
 
 > **Sampling note**: Plots using `ggbetweenstats()` draw a reproducible sample of 50,000 records (`set.seed(42)`) for rendering performance. Aggregate statistics quoted in the text are computed from the full 354,000-row dataset.
 
-<<<<<<< Updated upstream
-### Profitability Analysis — Loss Ratio
-=======
 ### 4.1 Exposure-Weighted Segment Scorecard
->>>>>>> Stashed changes
 
 Policy-level averages can be misleading in insurance because exposure varies across cancelled and short-duration policies. The scorecard below aggregates premium, incurred loss, claims, and exposure by key underwriting cells. It ranks segments by *excess incurred loss* above the portfolio loss ratio benchmark.
 
@@ -925,11 +857,7 @@ ggbetweenstats(
 )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: The Kruskal-Wallis test confirms statistically significant differences across all policy types. Comprehensive policies (COMP_E, COMP_N) carry the highest median loss ratios, consistent with their broader coverage scope — any damage to the insured vehicle is covered, not just third-party liability. Basic TP policies show lower and more tightly concentrated losses.
-=======
 **Interpretation**: The Kruskal-Wallis test confirms that loss-ratio distributions differ by policy type, although the test does not imply every pair of policy types is materially different. The aggregate pattern is strongest for comprehensive covers: COMP_N has the highest aggregate loss ratio and COMP_E is also above the narrower TP/CC covers. Because policy-level medians are pulled to zero by no-claim records, the underwriting story should rely on aggregate LR, mean LR, claim frequency, and tail shape rather than median LR alone.
->>>>>>> Stashed changes
 
 #### 4.2.2 Loss Ratio by Bonus Score
 
@@ -956,15 +884,9 @@ ggbetweenstats(
 )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: All pairwise comparisons are statistically significant (Holm-adjusted p \< 0.05), confirming that the bonus-malus system successfully stratifies policyholders by underlying risk. Policyholders with a "Bad" claims history generate materially higher losses — this signal should be reflected in pricing and underwriting decisions.
-
-#### Loss Ratio by Driver Age — Trend and Volatility
-=======
 **Interpretation**: The bonus-malus groups differ statistically, but the practical signal is clearer for claim occurrence and frequency than for raw aggregate loss ratio. Good risks have the lowest aggregate LR and claim rate, while Neutral and Bad risks are both adverse; Bad risks show the highest claim frequency and severity even though Neutral produces the highest aggregate LR in this sample. This supports retaining bonus score as a rating variable, while avoiding an over-simple Good \< Neutral \< Bad loss-ratio narrative.
 
 #### 4.2.3 Loss Ratio by Driver Age - Trend and Volatility
->>>>>>> Stashed changes
 
 Driver age is a fundamental underwriting variable. Beyond the mean loss ratio by age band, the coefficient of variation (CV = standard deviation / mean) measures how *unpredictable* outcomes are within each group — a critical input for pricing uncertainty and capital allocation.
 
@@ -1079,11 +1001,7 @@ ggbetweenstats(
 )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: Island municipalities and urban circulation areas are associated with higher loss ratios. Island exposures may reflect less competitive repair markets and higher logistics costs. Urban driving correlates with greater claim frequency due to traffic density — a well-established pattern in motor insurance.
-=======
 **Interpretation**: Urban circulation areas show a modestly higher loss ratio and materially higher claim frequency than rural areas, consistent with denser traffic exposure. Municipality type is less clean: Coastal and Island loss ratios are close to Inland overall, and the Island pattern is better described as year-to-year volatility than persistently higher loss cost. Geography is still useful, but it should be credibility-weighted rather than converted directly into raw territorial relativities.
->>>>>>> Stashed changes
 
 #### 4.2.5 Vehicle Value vs Loss Ratio
 
@@ -1091,11 +1009,7 @@ A scatterplot with marginal histograms is used to examine whether vehicle value 
 
 ```{r}
 #| label: biv-vval-lr-marginal
-<<<<<<< Updated upstream
-#| fig-cap: "Higher-value vehicles trend toward greater loss ratios — driven by elevated repair and replacement costs"
-=======
 #| fig-cap: "Vehicle value and loss ratio show a weak, non-linear relationship"
->>>>>>> Stashed changes
 #| fig-height: 8
 
 set.seed(42)
@@ -1128,23 +1042,15 @@ ggMarginal(
 )
 ```
 
-<<<<<<< Updated upstream
-#### Loss Ratio Distributions by Policy Type — Ridgeline Gradient
-=======
 **Interpretation**: Vehicle value should not be read as a simple linear driver of loss ratio in this portfolio. Higher-value vehicles do show higher claim frequency, but premiums and coverage mix offset part of the repair-cost effect, producing a weak and non-monotonic loss-ratio relationship. This makes vehicle value more useful as part of an interaction with policy type, deductible/excess, and repair-cost controls than as a standalone loading.
 
 #### 4.2.6 Loss Ratio Distributions by Policy Type - Ridgeline Gradient
->>>>>>> Stashed changes
 
 A ridgeline plot with a diverging colour gradient (blue = low LR, red = LR \> 1) exposes differences in the *shape* of loss ratio distributions across policy types. This matters for reserving: two segments with the same mean loss ratio can have very different tail weights, implying different capital requirements.
 
 ```{r}
 #| label: ridgeline-lr-ptype
-<<<<<<< Updated upstream
-#| fig-cap: "COMP covers have substantially heavier right tails — more extreme loss events are possible"
-=======
 #| fig-cap: "Policy-type loss ratio distributions differ in both centre and tail shape"
->>>>>>> Stashed changes
 #| fig-height: 7
 
 motor_lr |>
@@ -1174,11 +1080,7 @@ motor_lr |>
   theme(plot.title = element_text(face = "bold"))
 ```
 
-<<<<<<< Updated upstream
-### Volatility Analysis — Claim Frequency and Severity
-=======
 **Interpretation**: All five policy types show their mass concentrated well below the 100% break-even line, confirming that claim-free policy-years dominate across the entire portfolio, consistent with the zero-inflation observed earlier. However, the tails tell a more important story. Every policy type extends into loss-making territory beyond 100%, with some reaching 400–500%, indicating that when losses do occur, they can be severe multiples of the premium collected. This is the core reinsurance design problem: the portfolio is profitable on average but exposed to individual policy-years where losses far exceed premium. COMP_N shows the longest visible tail, extending furthest into red territory, which is consistent with its higher-value vehicle profile and greater claim severity potential. This segment represents the clearest case for reinsurance protection or conservative reserve loading. Critically, the near-identical shape of distributions across policy types, all sharply peaked near zero with similar tail behaviour, suggests that the key differentiator between segments is not the shape of the distribution but the frequency and magnitude of tail events. Segment-level profitability therefore hinges on how often these tail losses materialise, making claim frequency monitoring by policy type more actionable than average loss ratio comparisons alone.
->>>>>>> Stashed changes
 
 ### 4.3 Volatility Analysis - Claim Frequency and Severity
 
@@ -1331,11 +1233,6 @@ motor |>
   theme(strip.text = element_text(face = "bold"))
 ```
 
-<<<<<<< Updated upstream
-#### Bonus Score and Claim Occurrence — Chi-Square Test
-
-A stacked bar chart with an embedded chi-square test assesses whether the proportion of policies that generate at least one claim differs significantly across bonus score groups — directly testing the discriminatory power of the bonus-malus classification.
-=======
 **Interpretation**: The data confirms the well-established actuarial pattern of age-related claim frequency, but the magnitude here is striking. Drivers aged 18-25 show a claim rate above 20% and a mean claim frequency approaching 75% of exposure, more than double the rate of the next age band and nearly three times that of the oldest drivers. From a pricing perspective, this gradient is clear and actionable: driver age should be a primary rating factor, and the 18-25 band warrants a material premium loading relative to the rest of the book. If this loading is absent or insufficient, the portfolio is cross-subsidising young drivers at the expense of older, lower-risk policyholders, a structural pricing problem that compounds over time as the mix of young drivers grows. The near-monotonic decline across all age bands also means there is no evidence of a late-age frequency uptick, which is sometimes observed in very elderly drivers. The 65+ segment remains the lowest-frequency group, suggesting the portfolio does not currently face elevated risk from older drivers, though severity for this group should be examined separately before drawing conclusions about their overall profitability.
 
 #### 4.3.3 Fair Comparison of Claim Frequency - Funnel Plot
@@ -1432,7 +1329,6 @@ ggplot(funnel_segments, aes(x = exposure, y = claim_frequency)) +
 #### 4.3.4 Bonus Score and Claim Occurrence - Chi-Square Test
 
 I choose a stacked bar chart with an embedded chi-square test to assess whether the proportion of policies that generate at least one claim differs significantly across bonus score groups, directly testing the discriminatory power of the bonus-malus classification.
->>>>>>> Stashed changes
 
 ```{r}
 #| label: barstats-bonus-claim
@@ -1479,15 +1375,9 @@ motor |>
   )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: `loss_ratio` correlates negatively with `driver_age` — younger drivers incur proportionally higher losses. `vehicle_value` shows a positive correlation with loss ratio, consistent with higher repair and replacement costs. Notably, `claim_freq` and `claim_sev` are weakly correlated with each other, suggesting they are driven by different underlying risk factors and should be modelled separately in a frequency-severity framework.
-
-#### Multivariate Risk Profiling — Parallel Coordinates
-=======
 **Interpretation**: The numerical correlations are statistically useful but mostly modest in practical size, apart from the mechanical link between claim frequency and loss ratio. `loss_ratio` is weakly lower for older drivers and weakly higher for vehicle value in the sampled matrix, but neither relationship is strong enough to justify a standalone pricing rule. `claim_freq` and `claim_sev` are only weakly correlated with each other, supporting a frequency-severity framework rather than a single aggregate loss model.
 
 #### 4.3.6 Multivariate Risk Profiling - Parallel Coordinates
->>>>>>> Stashed changes
 
 Parallel coordinates allow patterns across six risk dimensions to be examined simultaneously without dimensionality reduction. Each line traces one policy from left to right across normalised axes. Colouring by bonus score reveals whether the "Bad" tier is systematically positioned in high-risk regions across multiple variables at once.
 
@@ -1532,11 +1422,7 @@ ggparcoord(
   )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: "Bad" bonus score policyholders (red) cluster at **younger driver ages**, **lower driving experience**, and **higher loss ratios** across the panel — confirming that the bonus-malus signal is not an isolated flag but reflects a genuine multivariate risk profile that spans several observable characteristics.
-=======
 **Interpretation**: "Bad" bonus score policyholders (red) tend to appear more often in higher-risk regions of the panel, especially around younger/lower-experience profiles and higher loss-ratio paths. The plot is exploratory rather than causal, but it supports the view that bonus score is not an isolated label; it overlaps with other observable risk characteristics that should be checked together in pricing and underwriting review.
->>>>>>> Stashed changes
 
 ### 4.4 Temporal Analysis
 
@@ -1596,11 +1482,6 @@ p_income <- annual |>
 (p_growth | p_lr_yr) / p_income
 ```
 
-<<<<<<< Updated upstream
-#### Loss Ratio Heatmap — Year × Segment
-
-A tile heatmap displays aggregate loss ratio across two categorical dimensions simultaneously. The diverging colour scale (blue = low LR, red = high LR) immediately highlights which year-segment combinations are performing well or deteriorating — a view that would require many separate line charts to replicate.
-=======
 **Interpretation**: - The portfolio grew 150% over two years, from 67,172 to 168,133 policies, with premium and incurred losses scaling broadly in proportion. The book remains profitable, but the aggregate loss ratio has deteriorated from 65.6% to 74.7%, a 9-percentage-point rise that, while not alarming in isolation, narrows the buffer to break-even and warrants monitoring.
 
 -   The deterioration coincides with rapid growth, which is consistent with new business carrying higher loss propensity before seasoning. However, whether the 2024 uptick reflects a temporary new-business effect or a structural shift in claims experience cannot be determined from aggregate trends alone, segment and cohort-level analysis is needed to distinguish between the two.
@@ -1608,7 +1489,6 @@ A tile heatmap displays aggregate loss ratio across two categorical dimensions s
 #### 4.4.2 Loss Ratio Heatmap - Year × Segment
 
 A tile heatmap displays aggregate loss ratio across two categorical dimensions simultaneously. The diverging colour scale (blue = low LR, red = high LR) immediately highlights which year-segment combinations are performing well or deteriorating, a view that would require many separate line charts to replicate.
->>>>>>> Stashed changes
 
 ```{r}
 #| label: heatmap-lr
@@ -1655,15 +1535,6 @@ h4 <- make_lr_heatmap("circulation_area", "Year × Circulation Area")
   )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: COMP_N policies had the worst loss ratio in 2023 before improving in 2024 — possibly reflecting a corrective pricing action. "Bad" bonus score policies consistently exceed the portfolio average in every year. Island municipalities show the most erratic year-on-year variation, suggesting that small volume and geographic concentration amplify random fluctuations.
-
-------------------------------------------------------------------------
-
-## Bonus: Alluvial Diagram — Risk Flow Through the Portfolio
-
-An alluvial (Sankey-style) diagram traces how policies flow across multiple categorical dimensions in a single visual. Unlike separate bar charts or cross-tabulations, it shows the *joint* distribution — which specific combinations of business type, bonus score, and claim outcome are most common — making it possible to identify the exact pathways through which claim volume concentrates in the portfolio.
-=======
 **Interpretation**: COMP_N is the most problematic policy type in the heatmap, with the highest aggregate LR in 2024 and a deterioration rather than a clean improvement. Bonus score also varies by year: Neutral is the worst cell in 2024, while Bad is adverse in 2023-2024 but not consistently above the portfolio average across all years. Island municipalities show the most erratic year-on-year movement, so the geographic story is more about volatility and credibility than a persistently higher Island loading.
 
 ------------------------------------------------------------------------
@@ -1673,7 +1544,6 @@ An alluvial (Sankey-style) diagram traces how policies flow across multiple cate
 ### 5.1 Risk Flow Through the Portfolio
 
 An alluvial (Sankey-style) diagram traces how policies flow across multiple categorical dimensions in a single visual. This would help identify the exact pathways through which claim volume concentrates in the portfolio.
->>>>>>> Stashed changes
 
 ```{r}
 #| label: bonus-alluvial
@@ -1721,11 +1591,7 @@ motor |>
   )
 ```
 
-<<<<<<< Updated upstream
-**Interpretation**: Portfolio policies with a "Good" bonus score dominate the no-claim stream — this is the low-risk core of the book. New Business policies with "Bad" bonus scores contribute a disproportionate share of claim events relative to their volume, signalling that new business underwriting controls need tightening for this risk segment.
-=======
 **Interpretation**: Good bonus-score policies dominate the no-claim stream because they dominate the portfolio by volume. The more critical insight is in the smaller flows: Bad and Neutral bonus tiers generate higher claim rates, and existing Portfolio business with Bad bonus has a particularly high claim occurrence rate. New Business Bad risks still contribute slightly more claim events than their policy share, but the alluvial chart should be read as a screening view; rate-based tables are needed before tightening new-business rules broadly.
->>>>>>> Stashed changes
 
 ### 5.2 Visual Model of Claim Propensity
 
@@ -1808,16 +1674,6 @@ claim_or |>
 ## Conclusions
 
 | Theme | Key Finding |
-<<<<<<< Updated upstream
-|----|----|
-| **Profitability** | Comprehensive policies (COMP_E/N) and "Bad" bonus score policyholders are the primary drivers of elevated loss ratios |
-| **Young drivers** | The 18–25 age band has the highest loss ratio, claim rate, and volatility — the most critical underwriting risk factor in the portfolio |
-| **Geography** | Island municipalities show higher and more volatile loss ratios; urban circulation areas are riskier than rural ones |
-| **Vehicle value** | Higher-value vehicles correlate positively with loss ratio, driven by elevated repair and replacement costs |
-| **Bonus-malus validation** | Chi-square and Kruskal-Wallis tests confirm the bonus score is a statistically significant predictor of both claim occurrence and loss severity |
-| **Temporal** | The portfolio grew year-on-year; aggregate loss ratio remained below 100% across all three years, indicating sustained underwriting profitability |
-| **Volatility** | COMP policies exhibit heavier right-tailed claim severity distributions — catastrophic individual losses are materially more likely in comprehensive coverage classes |
-=======
 |------------------------------------|------------------------------------|
 | **Profitability** | COMP_N has the highest aggregate LR, with COMP_E also elevated; bonus-score effects are adverse but not perfectly ordered by aggregate LR |
 | **Young drivers** | The 18-25 age band has the highest claim rate and frequency, but not the highest aggregate LR; it is primarily a frequency-risk segment |
@@ -1829,7 +1685,6 @@ claim_or |>
 | **Fair comparison** | Funnel analysis flags high-frequency cells that remain exceptional after accounting for unequal exposure size, including COMP_N/Good cells that would be missed by a simple young-driver or bad-bonus narrative |
 | **Adjusted claim propensity** | The visual logistic model identifies policy type as the strongest adjusted claim-occurrence signal, while young drivers and poorer bonus scores remain material after controls |
 | **Reinsurance lens** | The portfolio is profitable but tail-sensitive; excess-of-loss protection is conceptually more targeted than quota share, subject to claim-level treaty pricing data |
->>>>>>> Stashed changes
 
 Effective risk segmentation across **policy type, driver age, bonus score, and geography** can improve underwriting discipline and pricing accuracy for this portfolio, but the relativities should be credibility-weighted rather than copied directly from raw segment loss ratios. The bonus-malus system is actuarially useful and should be preserved; young drivers warrant frequency-focused controls, while geography needs cautious territorial treatment because Island results are volatile rather than consistently worse. From a reinsurance perspective, the main concern is not aggregate unprofitability but **retained volatility**: severe policy-year losses are rare but financially meaningful, and the tail is spread across several material coverage classes.
 
