@@ -3,6 +3,7 @@ title: "Motor Vehicle Insurance Portfolio"
 subtitle: "Visual Analytics - Executive Summary"
 author: "Do Thi Tue Minh"
 date: "2026-05-22"
+date-modified: "last-modified"
 format:
   revealjs:
     theme: white
@@ -189,7 +190,7 @@ Motor Vehicle Insurance Portfolio — Visual Analytics Insights
 |  15   | Conclusions & Managerial Recommendations              | —             |
 
 ::: notes
-This executive summary presents 12 visual analytics insights from a Spanish motor insurance portfolio of approximately 354,000 policy-year records spanning 2022 to 2024. Analysis covers portfolio composition, risk profiling, profitability, volatility drivers, and temporal trends. All group comparisons use non-parametric statistical tests appropriate for right-skewed insurance data. Slide 14 presents two bonus visual analytics techniques — alluvial flow and adjusted odds ratios — that go beyond standard course methods. Key findings and actionable recommendations are consolidated on the final slide.
+This report presents 12 visual analytics insights from a Spanish motor insurance portfolio of approximately 354,000 policy-year records spanning 2022 to 2024. Analysis covers portfolio composition, risk profiling, profitability, volatility drivers, and temporal trends. All group comparisons use non-parametric statistical tests appropriate for right-skewed insurance data. Slide 14 presents two bonus visual analytics techniques: alluvial flow and adjusted odds ratios, that go beyond standard course methods. Key findings and actionable recommendations are consolidated on the final slide.
 :::
 
 ------------------------------------------------------------------------
@@ -427,7 +428,7 @@ YOUNG DRIVERS HAVE THE HIGHEST CLAIM FREQUENCY; LR PATTERN IS NUANCED — NOT A 
 -   **Action implication:** Frequency controls (telematics, graduated excess) for 18–25; severity monitoring for 65+; a blanket age surcharge would be too blunt and would miss the severity-driven dynamics in older bands
 
 ::: notes
-Driver age generates two distinct risk signals that must be read separately. Claim frequency clearly peaks at 18–25 and declines monotonically through to 46–55. However, the aggregate LR is more complex - lower-premium TP policies common among young drivers mean low severity can offset high frequency in the loss ratio. Older age bands can show elevated LR despite lower frequency if severity or premium inadequacy dominates. The CV panel identifies that outcome unpredictability is high at both ends of the age spectrum. Management should respond with frequency controls for young drivers and severity monitoring for older cohorts, not a single age loading applied uniformly.
+Driver age generates two distinct risk signals that must be read separately. Claim frequency clearly peaks at 18–25 and declines monotonically through to 46–55. However, the aggregate LR is more complex, lower-premium TP policies common among young drivers mean low severity can offset high frequency in the loss ratio. Older age bands can show elevated LR despite lower frequency if severity or premium inadequacy dominates. The CV panel identifies that outcome unpredictability is high at both ends of the age spectrum. Management should respond with frequency controls for young drivers and severity monitoring for older cohorts, not a single age loading applied uniformly.
 :::
 
 ------------------------------------------------------------------------
@@ -540,7 +541,7 @@ SEVERITY SHAPES DIFFER BY PRODUCT; FREQUENCY AND SEVERITY ARE WEAKLY COUPLED —
 -   **Implication:** A two-part framework (separate frequency model + severity model) is required; combined aggregate models will systematically misallocate risk loads between high-frequency/low-severity and low-frequency/high-severity segments
 
 ::: notes
-The raincloud shows severity distributions are right-skewed in every product type, but the key heterogeneity is in the upper tails: COMP covers have the heaviest tails, CC has the greatest absolute reserve sensitivity due to volume. The correlation matrix adds the critical second finding — claim frequency and claim severity have only weak Spearman correlation, confirming they are near-independent drivers. A single aggregate loss model cannot distinguish a portfolio with many small claims from one with few catastrophic ones, yet both can produce the same total incurred. The two-part pricing framework implied by this finding is directly supported by Recommendation 6. Reserve projections must separate attritional from large-loss modelling per product type; IBNR cannot use a single severity point estimate across all covers.
+The raincloud shows severity distributions are right-skewed in every product type, but the key heterogeneity is in the upper tails: COMP covers have the heaviest tails, CC has the greatest absolute reserve sensitivity due to volume. The correlation matrix adds the critical second finding: claim frequency and claim severity have only weak Spearman correlation, confirming they are near-independent drivers. A single aggregate loss model cannot distinguish a portfolio with many small claims from one with few catastrophic ones, yet both can produce the same total incurred. The two-part pricing framework implied by this finding is directly supported by Recommendation 6. Reserve projections must separate attritional from large-loss modelling per product type; IBNR cannot use a single severity point estimate across all covers.
 :::
 
 ------------------------------------------------------------------------
