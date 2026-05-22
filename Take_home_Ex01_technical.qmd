@@ -30,7 +30,7 @@ theme_set(
 
 ## 1. Overview
 
-This technical report applies visual analytics techniques to a real-world **motor vehicle insurance portfolio** dataset from a Spanish non-life insurer (sourced from Mendeley Data). The dataset contains approximately 354,000 policy-year records spanning 2022-2024.
+This technical report applies visual analytics techniques to a real-world **motor vehicle insurance portfolio** dataset from a Spanish non-life insurer (sourced from [Mendeley Data](https://data.mendeley.com/datasets/sw4jmdb2sm/1)). The dataset contains approximately 354,000 policy-year records spanning 2022-2024.
 
 The two primary analytical objectives are:
 
@@ -284,7 +284,7 @@ motor <- motor_raw |>
 Three core actuarial metrics and two derived grouping variables are created:
 
 | Metric | Formula | Purpose |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | **Loss Ratio** | `total_incurred / total_premium` | Profitability — values \> 1 indicate underwriting losses |
 | **Claim Frequency** | `total_claims / total_exposure` | How often claims occur per unit of exposure |
 | **Claim Severity** | `total_incurred / total_claims` | Average cost per claim (only for policies with ≥1 claim) |
@@ -1776,7 +1776,7 @@ claim_or |>
 ## 6. Conclusion and Managerial Recommendation
 
 | Theme | Key Finding |
-|----|----|
+|------------------------------------|------------------------------------|
 | **Profitability** | COMP_N has the highest aggregate LR, with COMP_E also elevated; bonus-score effects are adverse but not perfectly ordered by aggregate LR |
 | **Young drivers** | The 18-25 age band has the highest claim rate and frequency, but not the highest aggregate LR; it is primarily a frequency-risk segment |
 | **Geography** | Urban circulation areas show higher claim frequency and modestly higher LR; Island municipalities are more volatile than persistently worse |
@@ -1791,7 +1791,7 @@ claim_or |>
 Effective risk segmentation across **policy type, driver age, bonus score, and geography** can improve underwriting discipline and pricing accuracy for this portfolio, but the relativities should be credibility-weighted rather than copied directly from raw segment loss ratios. The bonus-malus system is actuarially useful and should be preserved; young drivers warrant frequency-focused controls, while geography needs cautious territorial treatment because Island results are volatile rather than consistently worse. From a reinsurance perspective, the main concern is not aggregate unprofitability but **retained volatility**: severe policy-year losses are rare but financially meaningful, and the tail is spread across several material coverage classes.
 
 | Observation | Decision implication |
-|----|----|
+|------------------------------------|------------------------------------|
 | Aggregate LR is below 100%, but incurred losses are concentrated in the upper tail. | The book is profitable on average, yet retained earnings can still be volatile. Capital and reinsurance review should focus on tail load, not only mean LR. |
 | COMP_N has the highest aggregate LR among policy types. | Comprehensive without excess may be underpriced for retained own-damage exposure, or may need stronger repair-network, vehicle-value, and excess/deductible controls. |
 | Bad bonus and young-driver cells remain adverse after visual and model-based checks. | These are not just noisy segments; pricing relativities or underwriting rules should be reviewed for both intake and renewal decisions. |
