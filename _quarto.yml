@@ -47,7 +47,7 @@ website:
           - text: "Technical Report"
             href: Take_home_Ex01_technical.qmd
           - text: "Executive Summary"
-            href: Take_home_Ex01.qmd
+            href: Take_home_Ex01_Ex_Summary.qmd
 
     right:
       - href: index.qmd

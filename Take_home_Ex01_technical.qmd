@@ -1734,35 +1734,6 @@ claim_or |>
 
 -   The model view confirms that several visual patterns remain after adjustment. Policy type is the strongest adjusted claim-propensity signal, especially COMP_N and COMP_E relative to TP. Poorer bonus history and younger driver age also continue to raise claim odds, while New Business has lower adjusted claim odds than Portfolio business in this sample. This strengthens the bivariate findings, but it should still be treated as a diagnostic model rather than a production pricing model.
 
-## Conclusions
-
-| Theme | Key Finding |
-|------------------------------------|------------------------------------|
-| **Profitability** | COMP_N has the highest aggregate LR, with COMP_E also elevated; bonus-score effects are adverse but not perfectly ordered by aggregate LR |
-| **Young drivers** | The 18-25 age band has the highest claim rate and frequency, but not the highest aggregate LR; it is primarily a frequency-risk segment |
-| **Geography** | Urban circulation areas show higher claim frequency and modestly higher LR; Island municipalities are more volatile than persistently worse |
-| **Vehicle value** | Higher vehicle value raises exposure to repair cost and claim frequency, but its relationship with LR is weak and non-linear after premium and coverage mix are considered |
-| **Bonus-malus validation** | Chi-square, Kruskal-Wallis, and model diagnostics support bonus score as a useful risk signal, especially for claim occurrence and frequency |
-| **Temporal** | The portfolio grew year-on-year; aggregate loss ratio remained below 100% across all three years, indicating sustained underwriting profitability |
-| **Volatility** | Large-loss burden is distributed across several policy types: CC contributes the largest incurred share, COMP_E contains the maximum observed policy-year loss, and TPG has high excess-layer sensitivity |
-| **Fair comparison** | Funnel analysis flags high-frequency cells that remain exceptional after accounting for unequal exposure size, including COMP_N/Good cells that would be missed by a simple young-driver or bad-bonus narrative |
-| **Adjusted claim propensity** | The visual logistic model identifies policy type as the strongest adjusted claim-occurrence signal, while young drivers and poorer bonus scores remain material after controls |
-| **Reinsurance lens** | The portfolio is profitable but tail-sensitive; excess-of-loss protection is conceptually more targeted than quota share, subject to claim-level treaty pricing data |
-
-Effective risk segmentation across **policy type, driver age, bonus score, and geography** can improve underwriting discipline and pricing accuracy for this portfolio, but the relativities should be credibility-weighted rather than copied directly from raw segment loss ratios. The bonus-malus system is actuarially useful and should be preserved; young drivers warrant frequency-focused controls, while geography needs cautious territorial treatment because Island results are volatile rather than consistently worse. From a reinsurance perspective, the main concern is not aggregate unprofitability but **retained volatility**: severe policy-year losses are rare but financially meaningful, and the tail is spread across several material coverage classes.
-
-| Observation | Decision implication |
-|------------------------------------|------------------------------------|
-| Aggregate LR is below 100%, but incurred losses are concentrated in the upper tail. | The book is profitable on average, yet retained earnings can still be volatile. Capital and reinsurance review should focus on tail load, not only mean LR. |
-| COMP_N has the highest aggregate LR among policy types. | Comprehensive without excess may be underpriced for retained own-damage exposure, or may need stronger repair-network, vehicle-value, and excess/deductible controls. |
-| Bad bonus and young-driver cells remain adverse after visual and model-based checks. | These are not just noisy segments; pricing relativities or underwriting rules should be reviewed for both intake and renewal decisions. |
-| Urban and Island risks show higher or more erratic LR. | Geography may be proxying for repair inflation, traffic density, logistics cost, or sparse-volume volatility. A credibility-weighted territorial factor is preferable to simple raw LR ranking. |
-| Frequency and severity are weakly coupled. | A frequency-severity view is required. One portfolio action may reduce accident count, while a different action is needed for severity leakage and large-loss retention. |
-
-The reinsurance interpretation remains diagnostic rather than a treaty pricing conclusion. The dataset does not provide individual claim transactions, accident dates, claim development triangles, paid versus outstanding split, policy limits, deductibles, expenses, inflation trend, or reinstatement terms. A proper reinsurance submission would require historical ground-up loss bordereaux, exposure splits, rate-change history, large-loss narratives, and development-adjusted ultimate losses.
-
-------------------------------------------------------------------------
-
 ## References
 
 ### Course References
@@ -1799,3 +1770,32 @@ The reinsurance interpretation remains diagnostic rather than a treaty pricing c
 -   [patchwork](https://patchwork.data-imaginist.com/) for composing multiple ggplot2 figures.
 -   [ggrepel](https://ggrepel.slowkow.com/) for non-overlapping plot labels.
 -   [broom](https://broom.tidymodels.org/) for converting model output into tidy tables for visualisation.
+
+------------------------------------------------------------------------
+
+## 6. Conclusion and Managerial Recommendation
+
+| Theme | Key Finding |
+|------------------------------------|------------------------------------|
+| **Profitability** | COMP_N has the highest aggregate LR, with COMP_E also elevated; bonus-score effects are adverse but not perfectly ordered by aggregate LR |
+| **Young drivers** | The 18-25 age band has the highest claim rate and frequency, but not the highest aggregate LR; it is primarily a frequency-risk segment |
+| **Geography** | Urban circulation areas show higher claim frequency and modestly higher LR; Island municipalities are more volatile than persistently worse |
+| **Vehicle value** | Higher vehicle value raises exposure to repair cost and claim frequency, but its relationship with LR is weak and non-linear after premium and coverage mix are considered |
+| **Bonus-malus validation** | Chi-square, Kruskal-Wallis, and model diagnostics support bonus score as a useful risk signal, especially for claim occurrence and frequency |
+| **Temporal** | The portfolio grew year-on-year; aggregate loss ratio remained below 100% across all three years, indicating sustained underwriting profitability |
+| **Volatility** | Large-loss burden is distributed across several policy types: CC contributes the largest incurred share, COMP_E contains the maximum observed policy-year loss, and TPG has high excess-layer sensitivity |
+| **Fair comparison** | Funnel analysis flags high-frequency cells that remain exceptional after accounting for unequal exposure size, including COMP_N/Good cells that would be missed by a simple young-driver or bad-bonus narrative |
+| **Adjusted claim propensity** | The visual logistic model identifies policy type as the strongest adjusted claim-occurrence signal, while young drivers and poorer bonus scores remain material after controls |
+| **Reinsurance lens** | The portfolio is profitable but tail-sensitive; excess-of-loss protection is conceptually more targeted than quota share, subject to claim-level treaty pricing data |
+
+Effective risk segmentation across **policy type, driver age, bonus score, and geography** can improve underwriting discipline and pricing accuracy for this portfolio, but the relativities should be credibility-weighted rather than copied directly from raw segment loss ratios. The bonus-malus system is actuarially useful and should be preserved; young drivers warrant frequency-focused controls, while geography needs cautious territorial treatment because Island results are volatile rather than consistently worse. From a reinsurance perspective, the main concern is not aggregate unprofitability but **retained volatility**: severe policy-year losses are rare but financially meaningful, and the tail is spread across several material coverage classes.
+
+| Observation | Decision implication |
+|------------------------------------|------------------------------------|
+| Aggregate LR is below 100%, but incurred losses are concentrated in the upper tail. | The book is profitable on average, yet retained earnings can still be volatile. Capital and reinsurance review should focus on tail load, not only mean LR. |
+| COMP_N has the highest aggregate LR among policy types. | Comprehensive without excess may be underpriced for retained own-damage exposure, or may need stronger repair-network, vehicle-value, and excess/deductible controls. |
+| Bad bonus and young-driver cells remain adverse after visual and model-based checks. | These are not just noisy segments; pricing relativities or underwriting rules should be reviewed for both intake and renewal decisions. |
+| Urban and Island risks show higher or more erratic LR. | Geography may be proxying for repair inflation, traffic density, logistics cost, or sparse-volume volatility. A credibility-weighted territorial factor is preferable to simple raw LR ranking. |
+| Frequency and severity are weakly coupled. | A frequency-severity view is required. One portfolio action may reduce accident count, while a different action is needed for severity leakage and large-loss retention. |
+
+The reinsurance interpretation remains diagnostic rather than a treaty pricing conclusion. The dataset does not provide individual claim transactions, accident dates, claim development triangles, paid versus outstanding split, policy limits, deductibles, expenses, inflation trend, or reinstatement terms. A proper reinsurance submission would require historical ground-up loss bordereaux, exposure splits, rate-change history, large-loss narratives, and development-adjusted ultimate losses.
