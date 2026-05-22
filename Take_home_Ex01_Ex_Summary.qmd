@@ -62,7 +62,7 @@ format:
         /* ── Insight headings: Cabin Sketch, website accent colours ── */
         .insight-label {
           font-family: 'Cabin Sketch', cursive;
-          font-size: 1.38em;
+          font-size: 1.2em;
           font-weight: 700;
           color: #a51c30;
           text-align: center;
@@ -173,7 +173,7 @@ Motor Vehicle Insurance Portfolio — Visual Analytics Insights
 :::
 
 | Slide | Topic                                                 | Theme         |
-|:----------------:|:------------------------------------|:-----------------|
+|:----------:|:-------------------------------------------|:-----------|
 |   3   | Insight 1 — Portfolio Composition & Bonus Profile     | Exposure      |
 |   4   | Insight 2 — Exposure Base: Geography & Vehicle Brand  | Exposure      |
 |   5   | Insight 3 — Premium Distribution & Coverage Mix       | Pricing       |
@@ -510,31 +510,37 @@ The ridgeline confirms the intuitive coverage-vehicle alignment. The scatterplot
 :::
 
 ::: insight-title
-SEVERITY IS RIGHT-SKEWED IN EVERY PRODUCT; COMP COVERS SHOW HEAVIER UPPER TAILS — SINGLE AVERAGE SEVERITY ASSUMPTIONS ARE INADEQUATE
+SEVERITY SHAPES DIFFER BY PRODUCT; FREQUENCY AND SEVERITY ARE WEAKLY COUPLED — A TWO-PART PRICING FRAMEWORK IS REQUIRED
 :::
 
-::::: columns
-::: {.column width="50%"}
+::::::: three
+:::::: columns
+::: {.column width="33%"}
 ![](Take_home_Ex01_technical_files/figure-html/raincloud-severity-1.png)
 :::
 
-::: {.column width="50%"}
+::: {.column width="33%"}
 ![](Take_home_Ex01_technical_files/figure-html/biv-severity-ptype-1.png)
 :::
-:::::
+
+::: {.column width="33%"}
+![](Take_home_Ex01_technical_files/figure-html/corrmat-1.png)
+:::
+::::::
+:::::::
 
 ::: context
-**Claim severity distributions differ not only in mean but critically in shape across product types. Ignoring distributional heterogeneity produces systematically wrong reserve estimates and mispriced reinsurance attachment points.**
+**Severity distributions differ in shape across products, and frequency and severity are near-independent signals. Treating them as a single aggregate metric produces wrong reserve estimates and misallocates risk loads between frequency-driven and severity-driven sub-books.**
 :::
 
--   **Kruskal-Wallis test** confirms severity distributions differ significantly across policy types (p \< 0.001) =\> Product is a genuine severity discriminator, and per-product severity analysis is essential
--   **COMP_E and COMP_N show wider IQR and heavier upper tails**, creating greater reserving uncertainty and higher sensitivity to reinsurance attachment points; a single average understates COMP exposure
--   **CC matters by volume, not per-claim size:** Not the highest per-claim severity, but dominant exposure, any change in CC average severity drives the most absolute EUR reserve movement in the portfolio
--   **Multimodal shapes within product types** suggest attritional and large-loss claims are pooled; a single point estimate per product will misallocate reserves between the attritional base and tail layers
--   **Implication:** Separate attritional from large-loss modelling per product type; IBNR projections must not use a single severity assumption, COMP covers require explicit tail-loaded reserve margins
+-   **Kruskal-Wallis test** confirms severity distributions differ significantly across policy types (p \< 0.001) — product is a genuine severity discriminator, per-product severity analysis is not optional
+-   **COMP_E and COMP_N show wider IQR and heavier upper tails**: greater reserving uncertainty and higher reinsurance attachment sensitivity; a single average severity assumption systematically understates COMP exposure
+-   **CC matters by volume, not per-claim size:** Not the highest per-claim severity, but as the dominant exposure class, any shift in CC average severity drives the largest absolute EUR reserve movement in the portfolio
+-   **Claim frequency and claim severity are only weakly correlated** (Spearman matrix): near-independent signals — a pricing model targeting aggregate LR implicitly assumes they move together, which the data refutes
+-   **Implication:** A two-part framework (separate frequency model + severity model) is required; combined aggregate models will systematically misallocate risk loads between high-frequency/low-severity and low-frequency/high-severity segments
 
 ::: notes
-Severity dispersion, not just the average, differs materially across policy types. This is the key reserving message. COMP covers have wider distributions with heavier upper tails, increasing the uncertainty margin required in reserves. CC, as the dominant volume class, has the greatest absolute reserve sensitivity to any change in average severity even though its per-claim costs are lower than COMP. The multimodal claim patterns within several policy types indicate that attritional and large claims need to be modelled separately. A single point estimate per policy type is not defensible for IBNR or ultimate loss projections.
+The raincloud shows severity distributions are right-skewed in every product type, but the key heterogeneity is in the upper tails: COMP covers have the heaviest tails, CC has the greatest absolute reserve sensitivity due to volume. The correlation matrix adds the critical second finding — claim frequency and claim severity have only weak Spearman correlation, confirming they are near-independent drivers. A single aggregate loss model cannot distinguish a portfolio with many small claims from one with few catastrophic ones, yet both can produce the same total incurred. The two-part pricing framework implied by this finding is directly supported by Recommendation 6. Reserve projections must separate attritional from large-loss modelling per product type; IBNR cannot use a single severity point estimate across all covers.
 :::
 
 ------------------------------------------------------------------------

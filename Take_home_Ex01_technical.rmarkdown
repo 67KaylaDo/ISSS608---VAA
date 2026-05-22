@@ -1799,3 +1799,4 @@ Effective risk segmentation across **policy type, driver age, bonus score, and g
 | Frequency and severity are weakly coupled. | A frequency-severity view is required. One portfolio action may reduce accident count, while a different action is needed for severity leakage and large-loss retention. |
 
 The reinsurance interpretation remains diagnostic rather than a treaty pricing conclusion. The dataset does not provide individual claim transactions, accident dates, claim development triangles, paid versus outstanding split, policy limits, deductibles, expenses, inflation trend, or reinstatement terms. A proper reinsurance submission would require historical ground-up loss bordereaux, exposure splits, rate-change history, large-loss narratives, and development-adjusted ultimate losses.
+

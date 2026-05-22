@@ -174,7 +174,7 @@ MINH'S VISUAL ANALYTICS WEBSITE – Motor Vehicle Insurance Portfolio</title>
   /* ── Insight headings: Cabin Sketch, website accent colours ── */
   .insight-label {
     font-family: 'Cabin Sketch', cursive;
-    font-size: 1.38em;
+    font-size: 1.2em;
     font-weight: 700;
     color: #a51c30;
     text-align: center;
@@ -298,9 +298,9 @@ Do Thi Tue Minh
 </div>
 <table class="caption-top">
 <colgroup>
-<col style="width: 24%">
-<col style="width: 50%">
-<col style="width: 24%">
+<col style="width: 17%">
+<col style="width: 64%">
+<col style="width: 17%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -742,26 +742,30 @@ Do Thi Tue Minh
 <p><strong>INSIGHT #10 (CLAIM SEVERITY &amp; PRODUCT VOLATILITY):</strong></p>
 </div>
 <div class="insight-title">
-<p>SEVERITY IS RIGHT-SKEWED IN EVERY PRODUCT; COMP COVERS SHOW HEAVIER UPPER TAILS — SINGLE AVERAGE SEVERITY ASSUMPTIONS ARE INADEQUATE</p>
+<p>SEVERITY SHAPES DIFFER BY PRODUCT; FREQUENCY AND SEVERITY ARE WEAKLY COUPLED — A TWO-PART PRICING FRAMEWORK IS REQUIRED</p>
 </div>
+<div class="three">
 <div class="columns">
-<div class="column" style="width:50%;">
+<div class="column" style="width:33%;">
 <p><img data-src="Take_home_Ex01_technical_files/figure-html/raincloud-severity-1.png"></p>
-</div><div class="column" style="width:50%;">
+</div><div class="column" style="width:33%;">
 <p><img data-src="Take_home_Ex01_technical_files/figure-html/biv-severity-ptype-1.png"></p>
+</div><div class="column" style="width:33%;">
+<p><img data-src="Take_home_Ex01_technical_files/figure-html/corrmat-1.png"></p>
 </div></div>
+</div>
 <div class="context">
-<p><strong>Claim severity distributions differ not only in mean but critically in shape across product types. Ignoring distributional heterogeneity produces systematically wrong reserve estimates and mispriced reinsurance attachment points.</strong></p>
+<p><strong>Severity distributions differ in shape across products, and frequency and severity are near-independent signals. Treating them as a single aggregate metric produces wrong reserve estimates and misallocates risk loads between frequency-driven and severity-driven sub-books.</strong></p>
 </div>
 <ul>
-<li><strong>Kruskal-Wallis test</strong> confirms severity distributions differ significantly across policy types (p &lt; 0.001) =&gt; Product is a genuine severity discriminator, and per-product severity analysis is essential</li>
-<li><strong>COMP_E and COMP_N show wider IQR and heavier upper tails</strong>, creating greater reserving uncertainty and higher sensitivity to reinsurance attachment points; a single average understates COMP exposure</li>
-<li><strong>CC matters by volume, not per-claim size:</strong> Not the highest per-claim severity, but dominant exposure, any change in CC average severity drives the most absolute EUR reserve movement in the portfolio</li>
-<li><strong>Multimodal shapes within product types</strong> suggest attritional and large-loss claims are pooled; a single point estimate per product will misallocate reserves between the attritional base and tail layers</li>
-<li><strong>Implication:</strong> Separate attritional from large-loss modelling per product type; IBNR projections must not use a single severity assumption, COMP covers require explicit tail-loaded reserve margins</li>
+<li><strong>Kruskal-Wallis test</strong> confirms severity distributions differ significantly across policy types (p &lt; 0.001) — product is a genuine severity discriminator, per-product severity analysis is not optional</li>
+<li><strong>COMP_E and COMP_N show wider IQR and heavier upper tails</strong>: greater reserving uncertainty and higher reinsurance attachment sensitivity; a single average severity assumption systematically understates COMP exposure</li>
+<li><strong>CC matters by volume, not per-claim size:</strong> Not the highest per-claim severity, but as the dominant exposure class, any shift in CC average severity drives the largest absolute EUR reserve movement in the portfolio</li>
+<li><strong>Claim frequency and claim severity are only weakly correlated</strong> (Spearman matrix): near-independent signals — a pricing model targeting aggregate LR implicitly assumes they move together, which the data refutes</li>
+<li><strong>Implication:</strong> A two-part framework (separate frequency model + severity model) is required; combined aggregate models will systematically misallocate risk loads between high-frequency/low-severity and low-frequency/high-severity segments</li>
 </ul>
 <aside class="notes">
-<p>Severity dispersion, not just the average, differs materially across policy types. This is the key reserving message. COMP covers have wider distributions with heavier upper tails, increasing the uncertainty margin required in reserves. CC, as the dominant volume class, has the greatest absolute reserve sensitivity to any change in average severity even though its per-claim costs are lower than COMP. The multimodal claim patterns within several policy types indicate that attritional and large claims need to be modelled separately. A single point estimate per policy type is not defensible for IBNR or ultimate loss projections.</p>
+<p>The raincloud shows severity distributions are right-skewed in every product type, but the key heterogeneity is in the upper tails: COMP covers have the heaviest tails, CC has the greatest absolute reserve sensitivity due to volume. The correlation matrix adds the critical second finding — claim frequency and claim severity have only weak Spearman correlation, confirming they are near-independent drivers. A single aggregate loss model cannot distinguish a portfolio with many small claims from one with few catastrophic ones, yet both can produce the same total incurred. The two-part pricing framework implied by this finding is directly supported by Recommendation 6. Reserve projections must separate attritional from large-loss modelling per product type; IBNR cannot use a single severity point estimate across all covers.</p>
 <style type="text/css">
         span.MJX_Assistive_MathML {
           position:absolute!important;
