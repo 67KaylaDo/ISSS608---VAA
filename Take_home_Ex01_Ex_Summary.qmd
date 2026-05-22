@@ -174,7 +174,7 @@ Motor Vehicle Insurance Portfolio — Visual Analytics Insights
 :::
 
 | Slide | Topic                                                 | Theme         |
-|:----------:|:-------------------------------------------|:-----------|
+|:-----:|:------------------------------------------------------|:--------------|
 |   3   | Insight 1 — Portfolio Composition & Bonus Profile     | Exposure      |
 |   4   | Insight 2 — Exposure Base: Geography & Vehicle Brand  | Exposure      |
 |   5   | Insight 3 — Premium Distribution & Coverage Mix       | Pricing       |
