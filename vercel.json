@@ -1,5 +1,33 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "_site",
   "buildCommand": null,
-  "installCommand": null
+  "installCommand": null,
+  "redirects": [
+    {
+      "source": "/Take_home_Ex01_technical.qmd",
+      "destination": "/Take_home_Ex01_technical.html",
+      "permanent": false
+    },
+    {
+      "source": "/Take_home_Ex01_executive.qmd",
+      "destination": "/Take_home_Ex01_Ex_Summary.html",
+      "permanent": false
+    },
+    {
+      "source": "/Take_home_Ex01_Ex_Summary.qmd",
+      "destination": "/Take_home_Ex01_Ex_Summary.html",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/Take_home_Ex01_technical",
+      "destination": "/Take_home_Ex01_technical.html"
+    },
+    {
+      "source": "/Take_home_Ex01_Ex_Summary",
+      "destination": "/Take_home_Ex01_Ex_Summary.html"
+    }
+  ]
 }
