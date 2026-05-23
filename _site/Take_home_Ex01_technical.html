@@ -263,10 +263,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#visual-model-of-claim-propensity" id="toc-visual-model-of-claim-propensity" class="nav-link" data-scroll-target="#visual-model-of-claim-propensity">5.2 Visual Model of Claim Propensity</a></li>
   </ul></li>
   <li><a href="#conclusion-and-managerial-recommendation" id="toc-conclusion-and-managerial-recommendation" class="nav-link" data-scroll-target="#conclusion-and-managerial-recommendation">6. Conclusion and Managerial Recommendation</a></li>
-  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">7.References</a>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">7. References</a>
   <ul class="collapse">
+  <li><a href="#data-references" id="toc-data-references" class="nav-link" data-scroll-target="#data-references">Data References</a></li>
   <li><a href="#course-references" id="toc-course-references" class="nav-link" data-scroll-target="#course-references">Course References</a></li>
-  <li><a href="#method-and-package-references" id="toc-method-and-package-references" class="nav-link" data-scroll-target="#method-and-package-references">Method and Package References</a></li>
+  <li><a href="#software-and-package-references" id="toc-software-and-package-references" class="nav-link" data-scroll-target="#software-and-package-references">Software and Package References</a></li>
+  <li><a href="#statistical-method-references" id="toc-statistical-method-references" class="nav-link" data-scroll-target="#statistical-method-references">Statistical Method References</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -2802,7 +2804,14 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <p>The reinsurance interpretation remains diagnostic rather than a treaty pricing conclusion. The dataset does not provide individual claim transactions, accident dates, claim development triangles, paid versus outstanding split, policy limits, deductibles, expenses, inflation trend, or reinstatement terms. A proper reinsurance submission would require historical ground-up loss bordereaux, exposure splits, rate-change history, large-loss narratives, and development-adjusted ultimate losses.</p>
 </section>
 <section id="references" class="level2">
-<h2 class="anchored" data-anchor-id="references">7.References</h2>
+<h2 class="anchored" data-anchor-id="references">7. References</h2>
+<section id="data-references" class="level3">
+<h3 class="anchored" data-anchor-id="data-references">Data References</h3>
+<ul>
+<li>Espinosa, P., Lledó, J., &amp; Atance, D. (2026). <a href="https://data.mendeley.com/datasets/sw4jmdb2sm/1"><em>A detailed dataset of motor insurance policies with coverage-specific financial information</em></a>. Mendeley Data, Version 1. DOI: <a href="https://doi.org/10.17632/sw4jmdb2sm.1">10.17632/sw4jmdb2sm.1</a>. Licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</li>
+<li>The accompanying data dictionary workbook, <em>Descriptive of variables.xlsx</em>, was used to interpret field names, variable groupings, and source-code meanings during data preparation.</li>
+</ul>
+</section>
 <section id="course-references" class="level3">
 <h3 class="anchored" data-anchor-id="course-references">Course References</h3>
 <ul>
@@ -2825,11 +2834,14 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <li><em>R for Visual Analytics</em>: <a href="https://r4va.netlify.app/chap33">Chapter 33 - Summary</a></li>
 </ul>
 </section>
-<section id="method-and-package-references" class="level3">
-<h3 class="anchored" data-anchor-id="method-and-package-references">Method and Package References</h3>
+<section id="software-and-package-references" class="level3">
+<h3 class="anchored" data-anchor-id="software-and-package-references">Software and Package References</h3>
 <ul>
+<li><a href="https://www.r-project.org/">R Project</a> for the statistical computing environment used to prepare, analyse, and visualise the portfolio data.</li>
 <li><a href="https://www.tidyverse.org/">tidyverse</a> for data import, tidying, transformation, grouping, and plotting workflow.</li>
 <li><a href="https://ggplot2.tidyverse.org/">ggplot2</a> for layered grammar of graphics.</li>
+<li><a href="https://readxl.tidyverse.org/">readxl</a> for importing the Excel-based data dictionary.</li>
+<li><a href="https://cran.r-project.org/package=pacman">pacman</a> for package loading and dependency management.</li>
 <li><a href="https://wilkelab.org/ggridges/">ggridges</a> for ridgeline density plots.</li>
 <li><a href="https://mjskay.github.io/ggdist/">ggdist</a> for distribution and uncertainty visualisation.</li>
 <li><a href="https://indrajeetpatil.github.io/ggstatsplot/">ggstatsplot</a> for statistical graphics with embedded inferential results.</li>
@@ -2839,7 +2851,20 @@ $ liability_exposure          &lt;dbl&gt; 0.09863014, 1.00000000, 1.00000000, 1.
 <li><a href="https://corybrunson.github.io/ggalluvial/">ggalluvial</a> for alluvial flow visualisation.</li>
 <li><a href="https://patchwork.data-imaginist.com/">patchwork</a> for composing multiple ggplot2 figures.</li>
 <li><a href="https://ggrepel.slowkow.com/">ggrepel</a> for non-overlapping plot labels.</li>
+<li><a href="https://scales.r-lib.org/">scales</a> for axis, percentage, and currency formatting.</li>
+<li><a href="https://colorspace.r-forge.r-project.org/">colorspace</a> for colour palette support.</li>
+<li><a href="https://rstudio.github.io/DT/">DT</a> for interactive HTML tables.</li>
 <li><a href="https://broom.tidymodels.org/">broom</a> for converting model output into tidy tables for visualisation.</li>
+<li><a href="https://yihui.org/knitr/">knitr</a> and <a href="https://quarto.org/">Quarto</a> for reproducible report generation and table rendering.</li>
+</ul>
+</section>
+<section id="statistical-method-references" class="level3">
+<h3 class="anchored" data-anchor-id="statistical-method-references">Statistical Method References</h3>
+<ul>
+<li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/wilcox.test.html">Wilcoxon signed-rank test</a> for testing whether policy-year loss ratios differ from the break-even benchmark.</li>
+<li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/kruskal.test.html">Kruskal-Wallis rank sum test</a> for non-parametric group comparisons across skewed insurance metrics.</li>
+<li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/chisq.test.html">Chi-square test of independence</a> for testing association between bonus score and claim occurrence.</li>
+<li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/glm.html">Generalized linear models in R</a> for the logistic claim-propensity model used as a visual diagnostic.</li>
 </ul>
 <hr>
 

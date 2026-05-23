@@ -57,6 +57,7 @@ format:
         .reveal ul { margin-top: 1.0em; padding-left: 1.0em; }
         .reveal ul li { margin-bottom: 0.12em; }
         .reveal img { max-height: 295px; object-fit: contain; }
+        .reveal a img { cursor: pointer; }
         .reveal .three img { max-height: 285px; }
         .reveal .tall img { max-height: 350px; }
         .reveal .wide img { max-height: 370px; }
@@ -77,6 +78,16 @@ format:
           color: #0095A8;
           text-align: center;
           margin-bottom: 0.10em;
+        }
+        .insight-title a,
+        .toc-slide table a {
+          color: inherit;
+          text-decoration-color: #0095A8;
+          text-underline-offset: 0.12em;
+        }
+        .insight-title a:hover,
+        .toc-slide table a:hover {
+          color: #a51c30;
         }
         /* ── Context strip ── */
         .context {
@@ -173,21 +184,21 @@ execute:
 Motor Vehicle Insurance Portfolio — Visual Analytics Insights
 :::
 
-| Slide | Topic                                                 | Theme         |
-|:-----:|:------------------------------------------------------|:--------------|
-|   3   | Insight 1 — Portfolio Composition & Bonus Profile     | Exposure      |
-|   4   | Insight 2 — Exposure Base: Geography & Vehicle Brand  | Exposure      |
-|   5   | Insight 3 — Premium Distribution & Coverage Mix       | Pricing       |
-|   6   | Insight 4 — Loss Ratio Overview & Tail Concentration  | Profitability |
-|   7   | Insight 5 — Profitability by Policy Type              | Profitability |
-|   8   | Insight 6 — Bonus-Malus System Validation             | Risk Rating   |
-|   9   | Insight 7 — Driver Age Risk Profile                   | Risk Rating   |
-|  10   | Insight 8 — Geographic Risk & Territorial Volatility  | Geography     |
-|  11   | Insight 9 — Vehicle Value & Coverage Interaction      | Severity      |
-|  12   | Insight 10 — Claim Severity & Product Volatility      | Severity      |
-|  13   | Insight 11 — Large-Loss Layers & Funnel Analysis      | Tail Risk     |
-|  14   | Insight 12 — Temporal, Flow & Adjusted Risk Synthesis | Synthesis     |
-|  15   | Conclusions & Managerial Recommendations              | —             |
+| Slide | Topic | Theme |
+|:--:|:---|:---|
+| 3 | [Insight 1 — Portfolio Composition & Bonus Profile](Take_home_Ex01_technical.html#policy-and-insured-characteristics) | Exposure |
+| 4 | [Insight 2 — Exposure Base: Geography & Vehicle Brand](Take_home_Ex01_technical.html#vehicle-and-geographic-characteristics) | Exposure |
+| 5 | [Insight 3 — Premium Distribution & Coverage Mix](Take_home_Ex01_technical.html#premium-distribution) | Pricing |
+| 6 | [Insight 4 — Loss Ratio Overview & Tail Concentration](Take_home_Ex01_technical.html#loss-ratio-distribution-with-statistical-test) | Profitability |
+| 7 | [Insight 5 — Profitability by Policy Type](Take_home_Ex01_technical.html#loss-ratio-by-policy-type) | Profitability |
+| 8 | [Insight 6 — Bonus-Malus System Validation](Take_home_Ex01_technical.html#loss-ratio-by-bonus-score) | Risk Rating |
+| 9 | [Insight 7 — Driver Age Risk Profile](Take_home_Ex01_technical.html#loss-ratio-by-driver-age---trend-and-volatility) | Risk Rating |
+| 10 | [Insight 8 — Geographic Risk & Territorial Volatility](Take_home_Ex01_technical.html#loss-ratio-by-geography) | Geography |
+| 11 | [Insight 9 — Vehicle Value & Coverage Interaction](Take_home_Ex01_technical.html#vehicle-value-vs-loss-ratio) | Severity |
+| 12 | [Insight 10 — Claim Severity & Product Volatility](Take_home_Ex01_technical.html#claim-severity-by-policy-type---statistical-validation) | Severity |
+| 13 | [Insight 11 — Large-Loss Layers & Funnel Analysis](Take_home_Ex01_technical.html#volatility-analysis---claim-frequency-and-severity) | Tail Risk |
+| 14 | [Insight 12 — Temporal, Flow & Adjusted Risk Synthesis](Take_home_Ex01_technical.html#visual-model-of-claim-propensity) | Synthesis |
+| 15 | [Conclusions & Managerial Recommendations](Take_home_Ex01_technical.html#conclusion-and-managerial-recommendation) | — |
 
 ::: notes
 This report presents 12 visual analytics insights from a Spanish motor insurance portfolio of approximately 354,000 policy-year records spanning 2022 to 2024. Analysis covers portfolio composition, risk profiling, profitability, volatility drivers, and temporal trends. All group comparisons use non-parametric statistical tests appropriate for right-skewed insurance data. Slide 14 presents two bonus visual analytics techniques: alluvial flow and adjusted odds ratios, that go beyond standard course methods. Key findings and actionable recommendations are consolidated on the final slide.
@@ -200,16 +211,16 @@ This report presents 12 visual analytics insights from a Spanish motor insurance
 :::
 
 ::: insight-title
-CC AND COMP COVERS DOMINATE; NEW-BUSINESS BIAS AND BONUS CONCENTRATION REQUIRE CAREFUL INTERPRETATION
+[CC AND COMP COVERS DOMINATE; NEW-BUSINESS BIAS AND BONUS CONCENTRATION REQUIRE CAREFUL INTERPRETATION](Take_home_Ex01_technical.html#policy-and-insured-characteristics)
 :::
 
 ::::: columns
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/cat-policy-type-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/cat-policy-type-1.png)](Take_home_Ex01_technical.html#policy-and-insured-characteristics)
 :::
 
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/cat-policy-characteristics-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/cat-policy-characteristics-1.png)](Take_home_Ex01_technical.html#policy-and-insured-characteristics)
 :::
 :::::
 
@@ -234,16 +245,16 @@ The portfolio is dominated by CC and comprehensive covers. The most important ri
 :::
 
 ::: insight-title
-URBAN EXPOSURE IS MATERIAL; BRAND CONCENTRATION IN SEVEN CORE MANUFACTURERS DRIVES PORTFOLIO OUTCOMES
+[URBAN EXPOSURE IS MATERIAL; BRAND CONCENTRATION IN SEVEN CORE MANUFACTURERS DRIVES PORTFOLIO OUTCOMES](Take_home_Ex01_technical.html#vehicle-and-geographic-characteristics)
 :::
 
 ::::: columns
 ::: {.column width="42%"}
-![](Take_home_Ex01_technical_files/figure-html/cat-geo-fuel-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/cat-geo-fuel-1.png)](Take_home_Ex01_technical.html#vehicle-and-geographic-characteristics)
 :::
 
 ::: {.column width="58%"}
-![](Take_home_Ex01_technical_files/figure-html/treemap-brand-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/treemap-brand-1.png)](Take_home_Ex01_technical.html#vehicle-brand-composition---treemap)
 :::
 :::::
 
@@ -268,16 +279,16 @@ Urban circulation dominance explains why geographic effects will appear in later
 :::
 
 ::: insight-title
-BIMODAL PREMIUM REVEALS TWO DISTINCT RISK SEGMENTS; LIABILITY DOMINATES BOTH PREMIUM AND INCURRED LOSSES
+[BIMODAL PREMIUM REVEALS TWO DISTINCT RISK SEGMENTS; LIABILITY DOMINATES BOTH PREMIUM AND INCURRED LOSSES](Take_home_Ex01_technical.html#premium-distribution)
 :::
 
 ::::: columns
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/num-premium-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/num-premium-1.png)](Take_home_Ex01_technical.html#premium-distribution)
 :::
 
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/component-composition-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/component-composition-1.png)](Take_home_Ex01_technical.html#premium-and-loss-component-sandbox)
 :::
 :::::
 
@@ -302,16 +313,16 @@ The near-bimodal premium distribution is strategically important. Managing a low
 :::
 
 ::: insight-title
-PORTFOLIO PROFITABLE AT \~70% AGGREGATE LR, BUT TOP CLAIM-BEARING ROWS DRIVE THE MAJORITY OF INCURRED LOSSES
+[PORTFOLIO PROFITABLE AT \~70% AGGREGATE LR, BUT TOP CLAIM-BEARING ROWS DRIVE THE MAJORITY OF INCURRED LOSSES](Take_home_Ex01_technical.html#loss-ratio-distribution-with-statistical-test)
 :::
 
 ::::: columns
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/histostats-lr-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/histostats-lr-1.png)](Take_home_Ex01_technical.html#loss-ratio-distribution-with-statistical-test)
 :::
 
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/pareto-tail-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/pareto-tail-1.png)](Take_home_Ex01_technical.html#loss-ratio-distribution-with-statistical-test)
 :::
 :::::
 
@@ -336,16 +347,16 @@ Two structural features define this portfolio: zero-inflated base and a heavy ri
 :::
 
 ::: insight-title
-COMP_N HAS THE HIGHEST AGGREGATE LOSS RATIO; DISTRIBUTION SHAPES REVEAL DIFFERENT RESERVING NEEDS ACROSS COVERS
+[COMP_N HAS THE HIGHEST AGGREGATE LOSS RATIO; DISTRIBUTION SHAPES REVEAL DIFFERENT RESERVING NEEDS ACROSS COVERS](Take_home_Ex01_technical.html#loss-ratio-by-policy-type)
 :::
 
 ::::: columns
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/biv-lr-ptype-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/biv-lr-ptype-1.png)](Take_home_Ex01_technical.html#loss-ratio-by-policy-type)
 :::
 
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/ridgeline-lr-ptype-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/ridgeline-lr-ptype-1.png)](Take_home_Ex01_technical.html#loss-ratio-distributions-by-policy-type---ridgeline-gradient)
 :::
 :::::
 
@@ -370,16 +381,16 @@ The Kruskal-Wallis test confirms statistically significant product-level LR diff
 :::
 
 ::: insight-title
-BONUS SCORE DISCRIMINATES CLAIM OCCURRENCE EFFECTIVELY; SIGNAL IS STRONGER FOR FREQUENCY THAN FOR AGGREGATE LOSS RATIO
+[BONUS SCORE DISCRIMINATES CLAIM OCCURRENCE EFFECTIVELY; SIGNAL IS STRONGER FOR FREQUENCY THAN FOR AGGREGATE LOSS RATIO](Take_home_Ex01_technical.html#loss-ratio-by-bonus-score)
 :::
 
 ::::: columns
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/biv-lr-bonus-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/biv-lr-bonus-1.png)](Take_home_Ex01_technical.html#loss-ratio-by-bonus-score)
 :::
 
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/barstats-bonus-claim-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/barstats-bonus-claim-1.png)](Take_home_Ex01_technical.html#bonus-score-and-claim-occurrence---chi-square-test)
 :::
 :::::
 
@@ -404,16 +415,16 @@ Both visual tests confirm the actuarial validity of the bonus-malus system. The 
 :::
 
 ::: insight-title
-YOUNG DRIVERS HAVE THE HIGHEST CLAIM FREQUENCY; LR PATTERN IS NUANCED — NOT A SIMPLE U-SHAPE REQUIRING BLANKET SURCHARGES
+[YOUNG DRIVERS HAVE THE HIGHEST CLAIM FREQUENCY; LR PATTERN IS NUANCED — NOT A SIMPLE U-SHAPE REQUIRING BLANKET SURCHARGES](Take_home_Ex01_technical.html#loss-ratio-by-driver-age---trend-and-volatility)
 :::
 
 ::::: columns
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/biv-lr-driver-age-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/biv-lr-driver-age-1.png)](Take_home_Ex01_technical.html#loss-ratio-by-driver-age---trend-and-volatility)
 :::
 
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/biv-cf-age-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/biv-cf-age-1.png)](Take_home_Ex01_technical.html#claim-frequency-by-driver-age-band)
 :::
 :::::
 
@@ -438,21 +449,21 @@ Driver age generates two distinct risk signals that must be read separately. Cla
 :::
 
 ::: insight-title
-URBAN CIRCULATION RAISES CLAIM FREQUENCY; ISLAND LOSS RATIO IS VOLATILE — DO NOT APPLY RAW LR AS TERRITORIAL LOADING
+[URBAN CIRCULATION RAISES CLAIM FREQUENCY; ISLAND LOSS RATIO IS VOLATILE — DO NOT APPLY RAW LR AS TERRITORIAL LOADING](Take_home_Ex01_technical.html#loss-ratio-by-geography)
 :::
 
 ::::::: three
 :::::: columns
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/biv-lr-geo-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/biv-lr-geo-1.png)](Take_home_Ex01_technical.html#loss-ratio-by-geography)
 :::
 
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/biv-lr-circulation-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/biv-lr-circulation-1.png)](Take_home_Ex01_technical.html#loss-ratio-by-geography)
 :::
 
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/heatmap-lr-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/heatmap-lr-1.png)](Take_home_Ex01_technical.html#loss-ratio-heatmap---year-segment)
 :::
 ::::::
 :::::::
@@ -477,16 +488,16 @@ Urban circulation is a genuine, statistically confirmed risk factor. Higher traf
 :::
 
 ::: insight-title
-VEHICLE VALUE DOES NOT TRANSLATE CLEANLY TO HIGHER LOSS RATIO - USE AS INTERACTION VARIABLE, NOT A STANDALONE LOADING
+[VEHICLE VALUE DOES NOT TRANSLATE CLEANLY TO HIGHER LOSS RATIO - USE AS INTERACTION VARIABLE, NOT A STANDALONE LOADING](Take_home_Ex01_technical.html#vehicle-value-vs-loss-ratio)
 :::
 
 ::::: columns
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/ridgeline-vehicle-chars-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/ridgeline-vehicle-chars-1.png)](Take_home_Ex01_technical.html#driver-and-vehicle-characteristics---ridgeline-plots)
 :::
 
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/biv-vval-lr-marginal-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/biv-vval-lr-marginal-1.png)](Take_home_Ex01_technical.html#vehicle-value-vs-loss-ratio)
 :::
 :::::
 
@@ -511,21 +522,21 @@ The ridgeline confirms the intuitive coverage-vehicle alignment. The scatterplot
 :::
 
 ::: insight-title
-SEVERITY SHAPES DIFFER BY PRODUCT; FREQUENCY AND SEVERITY ARE WEAKLY COUPLED — A TWO-PART PRICING FRAMEWORK IS REQUIRED
+[SEVERITY SHAPES DIFFER BY PRODUCT; FREQUENCY AND SEVERITY ARE WEAKLY COUPLED — A TWO-PART PRICING FRAMEWORK IS REQUIRED](Take_home_Ex01_technical.html#claim-severity-by-policy-type---statistical-validation)
 :::
 
 ::::::: three
 :::::: columns
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/raincloud-severity-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/raincloud-severity-1.png)](Take_home_Ex01_technical.html#claim-severity-distribution-by-policy-type)
 :::
 
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/biv-severity-ptype-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/biv-severity-ptype-1.png)](Take_home_Ex01_technical.html#claim-severity-by-policy-type---statistical-validation)
 :::
 
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/corrmat-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/corrmat-1.png)](Take_home_Ex01_technical.html#correlation-structure-of-numerical-risk-factors)
 :::
 ::::::
 :::::::
@@ -551,16 +562,16 @@ The raincloud shows severity distributions are right-skewed in every product typ
 :::
 
 ::: insight-title
-LARGE-LOSS BURDEN SPANS MULTIPLE COVERS; FUNNEL IDENTIFIES GENUINE HIGH-FREQUENCY CELLS INCLUDING COMP_N/GOOD BONUS
+[LARGE-LOSS BURDEN SPANS MULTIPLE COVERS; FUNNEL IDENTIFIES GENUINE HIGH-FREQUENCY CELLS INCLUDING COMP_N/GOOD BONUS](Take_home_Ex01_technical.html#volatility-analysis---claim-frequency-and-severity)
 :::
 
 ::::: columns
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/large-loss-layer-plot-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/large-loss-layer-plot-1.png)](Take_home_Ex01_technical.html#claim-severity-by-policy-type---statistical-validation)
 :::
 
 ::: {.column width="50%"}
-![](Take_home_Ex01_technical_files/figure-html/funnel-claim-frequency-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/funnel-claim-frequency-1.png)](Take_home_Ex01_technical.html#fair-comparison-of-claim-frequency---funnel-plot)
 :::
 :::::
 
@@ -585,21 +596,21 @@ The large-loss layer chart reveals that tail exposure is not confined to compreh
 :::
 
 ::: insight-title
-PORTFOLIO GREW WITH SUSTAINED PROFITABILITY; POLICY TYPE IS THE STRONGEST ADJUSTED CLAIM-PROPENSITY SIGNAL
+[PORTFOLIO GREW WITH SUSTAINED PROFITABILITY; POLICY TYPE IS THE STRONGEST ADJUSTED CLAIM-PROPENSITY SIGNAL](Take_home_Ex01_technical.html#visual-model-of-claim-propensity)
 :::
 
 ::::::: three
 :::::: columns
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/temp-trends-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/temp-trends-1.png)](Take_home_Ex01_technical.html#portfolio-growth-and-profitability-trends)
 :::
 
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/bonus-alluvial-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/bonus-alluvial-1.png)](Take_home_Ex01_technical.html#risk-flow-through-the-portfolio)
 :::
 
 ::: {.column width="33%"}
-![](Take_home_Ex01_technical_files/figure-html/claim-model-odds-1.png)
+[![](Take_home_Ex01_technical_files/figure-html/claim-model-odds-1.png)](Take_home_Ex01_technical.html#visual-model-of-claim-propensity)
 :::
 ::::::
 :::::::
