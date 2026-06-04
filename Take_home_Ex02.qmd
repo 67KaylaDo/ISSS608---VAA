@@ -1,0 +1,2787 @@
+---
+title: "VAST Challenge 2026 MC2: Tracing the Anomalous SaidIT Post at Tenant Thread"
+subtitle: "ISSS608 Take-Home Exercise 2 - Visual Analytics Investigation"
+date: "2026-06-01"
+date-modified: "last-modified"
+execute:
+  eval: true
+  echo: true
+  warning: false
+  message: false
+  freeze: true
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show code"
+---
+
+## 1. Overview
+
+::: callout-important
+## Key Findings at a Glance
+
+-   The **17 May 2046, 4:21 am** SaidIT post (challenge-stated local time; **11:21 UTC** in the log) was **not human-authored**. The log records `Agent/person:john_windward` receiving a file-read task, passing a SaidIT permission check, posting `SwiftWren.txt`, then deleting both evidence files in a four-second burst.
+-   The observed mechanism is a **prompt-injection worm**: an agent reads `*_further_instructions.md`, executes a file-sourced post, deletes the payload, and relays the same task to other agents.
+-   The May 17 post was the **third occurrence**, following HiddenOrca on **10 May** and MellowOtter on **11 May**. This is a repeatable system failure, not an isolated glitch.
+-   A **single orchestration-layer rule** - block `queue_subordinate_task` tasks whose path matches `*_further_instructions.md` - would have stopped all **235** malicious queue relays while leaving **16,803** legitimate queue events untouched.
+:::
+
+On **17 May 2046 at approximately 4:21 am challenge-stated local time** (**11:21 UTC** in the event log), a post appeared on SaidIT, Tenant Thread's internal social platform, attributed to John Windward (Department Lead, Customer Support). The content looked like gibberish because the post body was not typed into the post event; the log points to `content_source = "SwiftWren.txt"`. The system therefore did exactly what a compromised agent instructed it to do: read a local payload file, publish it to `general`, and erase the artefacts.
+
+This analysis uses the full 185,147-event timeline (`MC2 data.json`) and organisational chart (`org_chart.json`) to reconstruct the root cause, situate it within the broader system, trace historical recurrence, and propose a targeted, evidence-backed remediation.
+
+### 1.1 Challenge Question Answer Map
+
+| MC2 question | Direct answer | Primary evidence visual |
+|----|----|----|
+| 1a. Exact chain for the May 17 post | Chloe Ballast's agent queued John Windward's agent to read `SwiftWren_further_instructions.md`; John Windward's agent checked SaidIT access, posted `SwiftWren.txt` to `general`, then deleted the instruction and payload files - all within 4 seconds. | Table 2 and Figure 6 |
+| 1b. System overview around that chain | The chain sits inside a wider agent-to-agent relay network: 186 SwiftWren relays across 18 agents, embedded in a 19-agent / 6-department multi-campaign contamination pattern. Any of the agents in the SaidIT permission surface (Figure 5b) was a viable terminal executor. | Figures 1, 5b, 7, 8, 8b, and 9 |
+| 2\. Meaning and origin of post contents | The posts are file-sourced execution payloads, not normal messages. Their probable displayed content is the deleted payload files: `HiddenOrca.txt`, `MellowOtter.txt`, and `SwiftWren.txt`. Two of three families are traceable to executive agents (CFO, COO). | Table 3, Figure 10A, Figure 10, and Table 4 |
+| 3a. Prior occurrences and recurrence risk | Yes. HiddenOrca and MellowOtter fired before SwiftWren; the same `_further_instructions.md` relay pattern recurred across campaigns, with evidence of worm evolution toward more persistent, time-triggered propagation. | Figures 11, 12, 13, 13b and Table 5 |
+| 3b. One intervention point | Block `queue_subordinate_task` events whose path ends in `_further_instructions.md`; this would stop all 235 malicious queue relays with zero false positives among 16,803 legitimate queue events. | Figures 14, 15, 17 and Tables 6, 8 |
+
+------------------------------------------------------------------------
+
+## 2. Data Preparation
+
+### 2.1 Package Loading
+
+```{r}
+#| label: load-packages
+
+pacman::p_load(
+  jsonlite,      # JSON parsing
+  tidyverse,     # data wrangling and ggplot2
+  lubridate,     # datetime handling
+  igraph,        # graph analytics and centrality
+  visNetwork,    # interactive HTML networks
+  echarts4r,     # interactive org chart tree
+  plotly,        # interactive charts
+  DT,            # interactive tables
+  htmltools,     # combining HTML widgets and legends
+  scales,        # axis formatting
+  glue           # string interpolation
+)
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+```
+
+### 2.2 Data Loading
+
+```{r}
+#| label: load-data
+
+mc2_raw     <- fromJSON("../VAST_Challenge_2026_MC2/MC2 data.json",
+                        simplifyVector = FALSE)
+events_list <- mc2_raw$events
+
+events_df <- map_dfr(events_list, function(e) {
+  tibble(
+    id          = e$id         %||% NA_integer_,
+    short_name  = e$short_name  %||% NA_character_,
+    when        = e$when        %||% NA_real_,
+    parties_str = paste(unlist(e$parties %||% list()), collapse = ";"),
+    details_str = as.character(toJSON(e$details %||% list(), auto_unbox = TRUE))
+  )
+}) %>%
+  mutate(
+    datetime   = as_datetime(when),
+    date       = as_date(datetime),
+    hour       = hour(datetime),
+    event_week = floor_date(datetime, "week"),
+    event_day  = floor_date(datetime, "day")
+  )
+
+org_raw   <- fromJSON("../VAST_Challenge_2026_MC2/org_chart.json")
+org_nodes <- as_tibble(org_raw$nodes)
+org_edges <- as_tibble(org_raw$edges)
+```
+
+### 2.3 Feature Engineering
+
+```{r}
+#| label: feature-engineering
+
+# Flag anomalous posts (content_source instead of content)
+events_df <- events_df %>%
+  mutate(
+    is_anomalous_post = str_detect(details_str, "content_source"),
+    actor_type = case_when(
+      str_detect(parties_str, "^Agent/")  ~ "Agent",
+      str_detect(parties_str, "^person:") ~ "Person",
+      str_detect(parties_str, "^system:") ~ "System",
+      TRUE                                ~ "Mixed"
+    )
+  )
+
+# Long-form parties table
+parties_long <- events_df %>%
+  select(id, short_name, datetime, date, details_str, parties_str) %>%
+  mutate(parties = str_split(parties_str, ";")) %>%
+  unnest(parties) %>%
+  filter(parties != "") %>%
+  mutate(
+    party_type = case_when(
+      str_starts(parties, "Agent/")  ~ "agent",
+      str_starts(parties, "person:") ~ "person",
+      str_starts(parties, "system:") ~ "system",
+      TRUE                           ~ "other"
+    ),
+    person_id = str_remove(parties, "^Agent/")
+  )
+
+# Propagation chain events
+instr_pattern <- "_further_instructions\\.md"
+
+chain_events <- events_df %>%
+  filter(
+    short_name %in% c("queue_subordinate_task", "assign_agent_task"),
+    str_detect(details_str, instr_pattern)
+  ) %>%
+  mutate(
+    instr_file = case_when(
+      str_detect(details_str, "HiddenOrca")  ~ "HiddenOrca",
+      str_detect(details_str, "MellowOtter") ~ "MellowOtter",
+      str_detect(details_str, "SwiftWren")   ~ "SwiftWren"
+    ),
+    sender   = str_remove(
+                 str_extract(parties_str, "Agent/person:[^;]+"), "^Agent/"),
+    receiver = str_remove(
+                 str_extract(details_str,  "Agent/person:[^\"]+"), "^Agent/")
+  )
+
+# Person -> team -> department lookup
+team_dept_lookup <- org_edges %>%
+  filter(str_starts(source, "department:"), str_starts(target, "team:")) %>%
+  left_join(org_nodes %>% select(id, dept_label = label),
+            by = c("source" = "id")) %>%
+  left_join(org_nodes %>% select(id, team_label = label),
+            by = c("target" = "id")) %>%
+  select(dept_id = source, team_id = target, dept_label, team_label)
+
+team_members <- org_edges %>%
+  filter(str_starts(source, "team:"), str_starts(target, "person:")) %>%
+  left_join(team_dept_lookup, by = c("source" = "team_id")) %>%
+  select(person_id = target, dept_label, team_label)
+
+dept_members <- org_edges %>%
+  filter(str_starts(source, "department:"), str_starts(target, "person:")) %>%
+  left_join(org_nodes %>% select(id, dept_label = label),
+            by = c("source" = "id")) %>%
+  mutate(team_label = if_else(relation == "led_by",
+                              paste0(dept_label, " Leadership"),
+                              dept_label)) %>%
+  select(person_id = target, dept_label, team_label)
+
+person_org_lookup <- bind_rows(team_members, dept_members) %>%
+  distinct(person_id, dept_label, team_label)
+
+person_dept_lookup <- person_org_lookup %>%
+  select(person_id, dept_label) %>%
+  distinct()
+
+clean_name <- function(x) {
+  x %>%
+    str_remove("^person:") %>%
+    str_replace_all("_", " ") %>%
+    str_to_title()
+}
+
+campaign_order <- c("HiddenOrca", "MellowOtter", "SwiftWren")
+
+# SaidIT permission surface: which agents have ever executed a posting check
+perm_surface <- events_df %>%
+  filter(short_name == "saidit_post_check") %>%
+  mutate(
+    checker     = str_remove(str_extract(parties_str, "(Agent/)?person:[^;]+"), "^Agent/"),
+    check_pass  = case_when(
+      str_detect(details_str, '"allowed":\\s*false')   ~ FALSE,
+      str_detect(details_str, '"permitted":\\s*false') ~ FALSE,
+      str_detect(details_str, '"result":\\s*false')    ~ FALSE,
+      TRUE                                             ~ TRUE
+    )
+  ) %>%
+  group_by(checker) %>%
+  summarise(
+    permission_checks = n(),
+    perm_passed       = sum(check_pass, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  left_join(person_dept_lookup, by = c("checker" = "person_id")) %>%
+  mutate(checker_clean = clean_name(checker))
+
+post_events <- events_df %>%
+  filter(short_name %in% c("saidit_post", "post_saidit")) %>%
+  mutate(
+    poster_type  = if_else(str_detect(parties_str, "Agent/"),
+                           "AI Agent", "Human"),
+    has_content  = str_detect(details_str, '"content":'),
+    has_source   = str_detect(details_str, '"content_source":'),
+    is_anomalous = is_anomalous_post,
+    instr_file   = case_when(
+      str_detect(details_str, "HiddenOrca")  ~ "HiddenOrca",
+      str_detect(details_str, "MellowOtter") ~ "MellowOtter",
+      str_detect(details_str, "SwiftWren")   ~ "SwiftWren",
+      TRUE                                   ~ NA_character_
+    ),
+    source_file  = str_extract(details_str, '(?<="content_source":")[^"]+'),
+    forum        = str_extract(details_str, '(?<="forum":")[^"]+')
+  )
+
+anomaly_posts <- post_events %>%
+  filter(is_anomalous) %>%
+  arrange(datetime) %>%
+  mutate(
+    instr_file = factor(instr_file, levels = campaign_order),
+    actor      = str_replace_all(str_extract(parties_str, "[^;]+"),
+                                 "Agent/person:", "Agent/")
+  )
+
+post_field_signature <- post_events %>%
+  mutate(
+    field_signature = case_when(
+      has_source & !has_content ~ "content_source only",
+      has_content & !has_source ~ "content only",
+      has_content & has_source  ~ "both fields",
+      TRUE                      ~ "neither field"
+    ),
+    post_class = case_when(
+      is_anomalous ~ "Anomalous post",
+      poster_type == "AI Agent" ~ "Normal AI agent post",
+      TRUE ~ "Normal human post"
+    )
+  ) %>%
+  count(post_class, field_signature, name = "posts")
+
+queue_task_profile <- events_df %>%
+  filter(short_name == "queue_subordinate_task") %>%
+  mutate(
+    is_worm_queue = str_detect(details_str, instr_pattern),
+    instr_file = case_when(
+      str_detect(details_str, "HiddenOrca")  ~ "HiddenOrca",
+      str_detect(details_str, "MellowOtter") ~ "MellowOtter",
+      str_detect(details_str, "SwiftWren")   ~ "SwiftWren",
+      TRUE                                   ~ NA_character_
+    )
+  )
+
+campaign_relay_profile <- queue_task_profile %>%
+  filter(is_worm_queue) %>%
+  group_by(instr_file) %>%
+  summarise(
+    first_relay = min(datetime),
+    last_relay = max(datetime),
+    queue_hops = n(),
+    relaying_agents = n_distinct(
+      str_remove(str_extract(parties_str, "Agent/person:[^;]+"), "^Agent/"),
+      na.rm = TRUE
+    ),
+    .groups = "drop"
+  ) %>%
+  mutate(instr_file = factor(instr_file, levels = campaign_order)) %>%
+  arrange(instr_file)
+
+forensic_register <- tibble(
+  Evidence = c(
+    "Event log size",
+    "Anomalous SaidIT posts",
+    "Normal posts using content_source",
+    "Malicious queue_subordinate_task events",
+    "Legitimate queue_subordinate_task events",
+    "Campaigns detected",
+    "Logged origin status"
+  ),
+  Data_Derived_Value = c(
+    scales::comma(nrow(events_df)),
+    scales::comma(nrow(anomaly_posts)),
+    scales::comma(sum(!post_events$is_anomalous & post_events$has_source)),
+    scales::comma(sum(queue_task_profile$is_worm_queue)),
+    scales::comma(sum(!queue_task_profile$is_worm_queue)),
+    paste(campaign_order, collapse = ", "),
+    "SwiftWren and MellowOtter have logged create_file events; HiddenOrca does not"
+  ),
+  Confidence = c(
+    "Observed",
+    "Observed",
+    "Observed",
+    "Observed",
+    "Observed",
+    "Observed",
+    "Mixed: observed for two campaigns, unresolved for HiddenOrca"
+  ),
+  Analytic_Use = c(
+    "Defines the scope of the investigation",
+    "Confirms the incident is repeated",
+    "Shows content_source is a perfect post-level anomaly flag in this log",
+    "Defines the intervention recall target",
+    "Defines the false-positive test set",
+    "Separates the incident into three related payload families",
+    "Prevents over-claiming about who authored the first HiddenOrca payload"
+  )
+)
+```
+
+**Steps taken:**
+
+-   **Flattens the raw JSON event log** into `events_df`, preserving event ID, event type, timestamp, actors, and details so every visual can be traced back to the source data.
+
+-   **Creates time variables** (`date`, `hour`, `event_week`, `event_day`) for daily activity charts, posting-hour analysis, weekly heatmaps, and the relay-timing calendar.
+
+-   **Splits the actor field** into `parties_long`, allowing agents, people, and systems to be counted and joined consistently.
+
+-   **Flags anomalous SaidIT posts** by detecting `content_source`, the key structural difference between normal text posts and file-sourced worm posts.
+
+-   **Extracts worm campaign families** (`HiddenOrca`, `MellowOtter`, `SwiftWren`) from event details so prior incidents can be compared.
+
+-   **Reconstructs propagation chains** by extracting sender and receiver agents from `queue_subordinate_task` events involving `_further_instructions.md`.
+
+-   **Builds the observed SaidIT permission surface** (`perm_surface`) from `saidit_post_check` events, identifying agents that exercised posting capability - the visible pool of viable worm terminal executors in the log.
+
+-   **Joins organisation metadata** from `org_chart.json`, linking each person to team and department for the org tree, contamination heatmap, and network interpretation.
+
+-   **Builds the forensic register** to separate observed facts from bounded inference, improving reproducibility and preventing over-claiming.
+
+### 2.4 Dataset at a Glance
+
+```{r}
+#| label: dataset-summary
+
+event_summary <- events_df %>%
+  count(short_name, name = "count") %>%
+  arrange(desc(count)) %>%
+  mutate(pct = round(count / sum(count) * 100, 2))
+
+datatable(
+  event_summary,
+  caption  = "Table 1: Event type frequencies (MC2 event log, n = 185,147)",
+  options  = list(pageLength = 12, dom = "tp"),
+  rownames = FALSE,
+  colnames = c("Event type", "Count", "% of total")
+)
+```
+
+### 2.5 Forensic Evidence Register
+
+This report separates **observed evidence** from **inference**. The register below is intentionally placed before the visual story so that every major claim can be audited back to a field in the event log.
+
+```{r}
+#| label: forensic-register
+
+datatable(
+  forensic_register,
+  caption  = "Table 1b: Evidence register, computed from MC2 data.json",
+  options  = list(dom = "t", paging = FALSE),
+  rownames = FALSE,
+  colnames = c("Evidence item", "Data-derived value", "Confidence", "Analytic use")
+) %>%
+  formatStyle(
+    "Confidence",
+    backgroundColor = styleEqual(
+      c("Observed", "Mixed: observed for two campaigns, unresolved for HiddenOrca"),
+      c("#e8f5e9", "#fff3e0")
+    )
+  )
+```
+
+::: callout-note
+## What the Register Prevents
+
+The log proves that file-sourced posts occurred, that the `*_further_instructions.md` relay pattern spread across agents, and that the final SwiftWren post was automated. It does **not** preserve the deleted payload text or fully explain how the first HiddenOrca instruction file entered the system. Those are treated as bounded inferences, not facts.
+:::
+
+### 2.6 Visual Analytics Design
+
+The investigation is organised as a forensic workflow rather than a gallery of charts. Each visual is tied to one analytic decision: establish the baseline, reconstruct the chain, identify the meaning of the content, test recurrence, then justify exactly one intervention point.
+
+```{r}
+#| label: va-design-table
+
+va_design <- tibble(
+  Challenge_question = c(
+    "How did the May 17 post happen?",
+    "How does the chain fit into the wider system?",
+    "What do the posts mean?",
+    "Did it happen before?",
+    "Where should the system be changed?"
+  ),
+  Data_signal = c(
+    "Four-second sequence around `content_source = SwiftWren.txt`; SaidIT permission check passes without human gate",
+    "Agent-to-agent `queue_subordinate_task` network, org chart membership, SaidIT permission surface, department-level relay corridors",
+    "`content_source` field separates anomalous from normal posts; payload-file creation/read/delete event chain; executive agent file creation",
+    "Three instruction families (HiddenOrca, MellowOtter, SwiftWren); relay velocity evolution; day-by-hour calendar of relay bursts",
+    "Filename rule on `*_further_instructions.md` queue tasks; 100% recall with 0% false positives across 17,038 events"
+  ),
+  VA_method = c(
+    "Interactive event table (Table 2) and micro-Gantt timeline (Figure 6)",
+    "Expandable org tree (Figure 1), SaidIT permission surface bar (Figure 5b), igraph betweenness network (Figure 7), dept heatmap (Figure 8), ranked relay corridors (Figure 8b), relay ladder (Figure 9)",
+    "Post field fingerprint bubble chart (Figure 10A), mechanism diagram (Figure 10), file-creator table (Table 4)",
+    "Campaign timeline (Figure 11), inter-hop density (Figure 12), comparative stats (Table 5), cross-campaign agent overlap (Figure 13), relay calendar heatmap (Figure 13b)",
+    "Queue split by week (Figure 14), precision table (Table 6), intervention decision matrix (Figure 15), centrality ranking (Figure 16), counterfactual step chart (Figure 17), risk assessment (Table 8)"
+  )
+)
+
+datatable(
+  va_design,
+  caption = "Visual analytics design map linking each MC2 question to the evidence and visual method used",
+  options = list(
+    dom = "t",
+    paging = FALSE,
+    scrollX = TRUE,
+    columnDefs = list(
+      list(width = "18%", targets = 0),
+      list(width = "35%", targets = 1),
+      list(width = "47%", targets = 2)
+    )
+  ),
+  rownames = FALSE,
+  colnames = c("Challenge question", "Data signal", "Visual analytics method")
+)
+```
+
+------------------------------------------------------------------------
+
+## 3. System Baseline: Mapping What Is Actually Present
+
+Before investigating the anomaly, we must understand the *normal* system - its structure, its rhythm, and its actors.
+
+### 3.1 Organisational Chart
+
+Click any node to expand or collapse that branch. Company, department, and team nodes expose structure; person nodes are coloured by forensic role: red = anomalous poster, orange = payload origin, purple = gateway, amber = worm-chain agent, blue = no worm activity.
+
+```{r}
+#| label: org-chart
+#| fig-cap: "Figure 1: Tenant Thread org chart - use the search box to filter by name, click arrows to expand/collapse departments and teams."
+
+# ── Per-person metadata computed from the event log ─────────────────────────
+person_nodes <- org_nodes %>%
+  filter(type == "person") %>%
+  transmute(
+    person_id = id,
+    name_clean = label,
+    title = replace_na(title, "")
+  )
+
+person_activity <- parties_long %>%
+  filter(str_starts(person_id, "person:")) %>%
+  count(person_id, name = "total_events")
+
+person_relays <- bind_rows(
+  chain_events %>%
+    transmute(person_id = sender, instr_file,
+              worm_relays = 1L, worm_receipts = 0L),
+  chain_events %>%
+    transmute(person_id = receiver, instr_file,
+              worm_relays = 0L, worm_receipts = 1L)
+) %>%
+  filter(!is.na(person_id)) %>%
+  group_by(person_id) %>%
+  summarise(
+    worm_relays      = sum(worm_relays),
+    worm_receipts    = sum(worm_receipts),
+    worm_touchpoints = worm_relays + worm_receipts,
+    worm_campaigns   = n_distinct(instr_file),
+    .groups = "drop"
+  )
+
+person_posts <- events_df %>%
+  filter(short_name %in% c("saidit_post", "post_saidit")) %>%
+  mutate(person_id = str_remove(str_extract(parties_str, "(Agent/)?person:[^;]+"), "^Agent/")) %>%
+  count(person_id, name = "posts")
+
+person_meta <- person_nodes %>%
+  left_join(person_activity, by = "person_id") %>%
+  left_join(person_relays, by = "person_id") %>%
+  left_join(person_posts, by = "person_id") %>%
+  mutate(
+    total_events     = replace_na(total_events, 0),
+    worm_relays      = replace_na(worm_relays, 0),
+    worm_receipts    = replace_na(worm_receipts, 0),
+    worm_touchpoints = replace_na(worm_touchpoints, 0),
+    worm_campaigns   = replace_na(worm_campaigns, 0),
+    posts            = replace_na(posts, 0)
+  ) %>%
+  mutate(
+    is_infected = worm_touchpoints > 0,
+    is_origin   = person_id %in% c("person:emma_harbor", "person:noah_mariner"),
+    is_target   = person_id == "person:john_windward",
+    is_gateway  = person_id == "person:chloe_ballast",
+    # symbol size: log-scaled activity, min 8 max 26
+    sym_size    = round(rescale(log1p(total_events), to = c(8, 26))),
+    node_color  = case_when(
+      is_target   ~ "#D9534F",   # red   - posted the anomalous content
+      is_origin   ~ "#E67E22",   # orange - created the payload
+      is_gateway  ~ "#9B59B6",   # purple - critical relay gateway
+      is_infected ~ "#F39C12",   # amber  - in worm chain
+      TRUE        ~ "#5C85D6"    # blue   - clean
+    ),
+    status_text = case_when(
+      is_target   ~ "ANOMALOUS POSTER",
+      is_origin   ~ "PAYLOAD CREATOR",
+      is_gateway  ~ "WORM GATEWAY",
+      is_infected ~ "Worm chain agent",
+      TRUE        ~ "No worm activity"
+    ),
+    tooltip_html = paste0(
+      "<div style='font-size:13px;line-height:1.6'>",
+      "<b>", name_clean, "</b>",
+      if_else(title != "", paste0(" <span style='color:#888'>(", title, ")</span>"), ""),
+      "<br>Status: <b style='color:", node_color, "'>", status_text, "</b>",
+      "<br>Total events: <b>", scales::comma(total_events), "</b>",
+      "<br>Worm relays sent: <b>", worm_relays, "</b>",
+      "<br>Worm relays received: <b>", worm_receipts, "</b>",
+      "<br>Campaigns touched: <b>", worm_campaigns, "</b>",
+      if_else(posts > 0, paste0("<br>SaidIT posts: <b>", posts, "</b>"), ""),
+      "</div>"
+    )
+  )
+
+# ── Build flat hierarchy table ────────────────────────────────────────────────
+team_dept <- org_edges %>%
+  filter(str_starts(source, "department:"), str_starts(target, "team:")) %>%
+  left_join(org_nodes %>% select(id, dept_label = label), by = c("source" = "id")) %>%
+  select(team_id = target, department = dept_label)
+
+person_team <- org_edges %>%
+  filter(str_starts(source, "team:"), str_starts(target, "person:"),
+         relation == "contains") %>%
+  left_join(org_nodes %>% select(id, team_label = label), by = c("source" = "id")) %>%
+  rename(person_id = target) %>%
+  left_join(team_dept, by = c("source" = "team_id")) %>%
+  left_join(person_meta, by = "person_id") %>%
+  select(department, team = team_label, person_id, name_clean,
+         sym_size, node_color, tooltip_html, title, worm_relays,
+         worm_receipts, worm_touchpoints, worm_campaigns,
+         total_events, status_text, posts)
+
+dept_leads <- org_edges %>%
+  # catch both "led_by" (dept leads) and "contains" (executives directly under dept)
+  filter(str_starts(source, "department:"),
+         str_starts(target, "person:")) %>%
+  left_join(org_nodes %>% select(id, dept_label = label), by = c("source" = "id")) %>%
+  rename(person_id = target) %>%
+  left_join(person_meta, by = "person_id") %>%
+  mutate(team = paste0(dept_label, " - Leadership"),
+         team_label = team) %>%
+  select(department = dept_label, team, person_id, name_clean,
+         sym_size, node_color, tooltip_html, title, worm_relays,
+         worm_receipts, worm_touchpoints, worm_campaigns,
+         total_events, status_text, posts)
+
+org_full <- bind_rows(person_team, dept_leads) %>%
+  filter(!is.na(department), !is.na(team), !is.na(name_clean)) %>%
+  distinct(department, team, name_clean, .keep_all = TRUE)
+
+# ── Build echarts person node ─────────────────────────────────────────────────
+make_person_node_ec <- function(row) {
+  col <- if (row$person_id == "person:john_windward")                          "#D9534F"
+         else if (row$person_id %in% c("person:emma_harbor","person:noah_mariner")) "#E67E22"
+         else if (row$person_id == "person:chloe_ballast")                     "#9B59B6"
+         else if (row$worm_touchpoints > 0)                                    "#F39C12"
+         else                                                                   "#5C85D6"
+
+  badge <- if (row$person_id == "person:john_windward")                          "POSTER"
+            else if (row$person_id %in% c("person:emma_harbor","person:noah_mariner")) "ORIGIN"
+            else if (row$person_id == "person:chloe_ballast")                     "GATEWAY"
+            else if (row$worm_touchpoints > 0)  paste0(row$worm_touchpoints, " touches")
+            else ""
+
+  display_name <- paste0(
+    row$name_clean,
+    if (badge != "") paste0("\n", badge) else ""
+  )
+
+  tip <- paste0(
+    "<b>", row$name_clean, "</b>",
+    if (!is.na(row$title) && row$title != "") paste0("<br><i>", row$title, "</i>") else "",
+    "<br>Events: ", scales::comma(row$total_events),
+    "<br>Worm relays sent: ", row$worm_relays,
+    "<br>Worm relays received: ", row$worm_receipts,
+    "<br>Campaigns touched: ", row$worm_campaigns,
+    if (row$posts > 0) paste0("<br>SaidIT posts: ", row$posts) else ""
+  )
+
+  list(
+    name       = display_name,
+    symbolSize = row$sym_size,
+    symbol     = if (row$worm_touchpoints > 0) "diamond" else "circle",
+    itemStyle  = list(color = col, borderColor = col, borderWidth = 2),
+    label      = list(
+      show       = TRUE, fontSize = 9, color = "#222",
+      fontWeight = if (row$worm_touchpoints > 0) "bold" else "normal",
+      overflow   = "none"
+    ),
+    tooltip    = list(formatter = tip)
+  )
+}
+
+# ── Build echarts team / department nodes ─────────────────────────────────────
+make_ec_tree <- function(df) {
+  dept_list <- lapply(sort(unique(df$department)), function(d) {
+    td    <- df %>% filter(department == d)
+    n_inf <- sum(td$worm_touchpoints > 0, na.rm = TRUE)
+    n_tot <- nrow(td)
+    dcol  <- if (n_inf > n_tot / 2) "#C0392B"
+              else if (n_inf > 0)    "#E67E22"
+              else                   "#2EADC1"
+
+    team_list <- lapply(sort(unique(td$team)), function(t) {
+      tt    <- td %>% filter(team == t)
+      t_inf <- sum(tt$worm_touchpoints > 0, na.rm = TRUE)
+      tcol  <- if (t_inf > 0) "#F39C12" else "#5C85D6"
+      tlabel <- if (t_inf > 0) paste0(t, "\n(", t_inf, " touched)") else t
+
+      list(
+        name      = tlabel,
+        collapsed = TRUE,
+        symbolSize = 14,
+        itemStyle  = list(color = tcol, borderWidth = 2),
+        label      = list(fontSize = 10, fontWeight = "bold", color = "#222"),
+        tooltip    = list(formatter = paste0("<b>", t, "</b><br>", nrow(tt),
+                                             " members, ", t_inf, " in worm chain")),
+        children   = lapply(seq_len(nrow(tt)), function(i) make_person_node_ec(tt[i, ]))
+      )
+    })
+
+    list(
+      name      = paste0(d, "\n(", n_inf, "/", n_tot, " touched)"),
+      collapsed = TRUE,
+      symbolSize = 18,
+      itemStyle  = list(color = dcol, borderWidth = 3),
+      label      = list(fontSize = 11, fontWeight = "bold", color = "#111"),
+      tooltip    = list(formatter = paste0("<b>", d, "</b><br>",
+                                           n_inf, " of ", n_tot, " agents in worm chain")),
+      children   = team_list
+    )
+  })
+
+  list(
+    name       = "Tenant Thread",
+    symbolSize = 26,
+    symbol     = "roundRect",
+    itemStyle  = list(color = "#F5A623", borderWidth = 3),
+    label      = list(fontSize = 13, fontWeight = "bold", color = "#000"),
+    tooltip    = list(formatter = paste0("<b>Tenant Thread</b><br>",
+                                         nrow(org_full), " staff mapped")),
+    children   = dept_list
+  )
+}
+
+ec_tree_data <- make_ec_tree(org_full)
+
+# ── Shared render helper - one function used for every tab ────────────────────
+render_tree <- function(tree_node, h = "860px") {
+  e_charts(height = h, width = "100%") %>%
+    e_list(list(
+      backgroundColor = "#f8f9fa",
+      tooltip = list(
+        trigger   = "item",
+        enterable = TRUE,
+        formatter = htmlwidgets::JS(
+          "function(p){
+             return (p.data.tooltip && p.data.tooltip.formatter)
+                    ? p.data.tooltip.formatter : p.name;
+           }"
+        )
+      ),
+      legend = list(
+        show = TRUE, orient = "horizontal",
+        bottom = 4, left = "center",
+        itemGap = 14,
+        data = list(
+          list(name = "Dept (all clean)",    icon = "circle",  itemStyle = list(color = "#2EADC1")),
+          list(name = "Dept (some touched)", icon = "circle",  itemStyle = list(color = "#E67E22")),
+          list(name = "Anomalous poster",    icon = "diamond", itemStyle = list(color = "#D9534F")),
+          list(name = "Payload origin",      icon = "diamond", itemStyle = list(color = "#E67E22")),
+          list(name = "Worm gateway",        icon = "diamond", itemStyle = list(color = "#9B59B6")),
+          list(name = "Worm chain agent",    icon = "diamond", itemStyle = list(color = "#F39C12")),
+          list(name = "Clean agent",         icon = "circle",  itemStyle = list(color = "#5C85D6"))
+        ),
+        textStyle = list(fontSize = 10)
+      ),
+      series = list(list(
+        type              = "tree",
+        data              = list(tree_node),
+        layout            = "orthogonal",
+        orient            = "TB",          # top → bottom
+        top               = "8%",
+        bottom            = "12%",
+        left              = "3%",
+        right             = "3%",
+        roam              = TRUE,          # scroll = zoom, drag = pan
+        expandAndCollapse = TRUE,
+        initialTreeDepth  = 3,             # show company → dept → team on load
+        edgeShape         = "polyline",    # 90-degree right-angle connectors
+        lineStyle         = list(color = "#999", width = 1.5),
+        symbol            = "circle",
+        symbolSize        = 10,
+        label = list(
+          show          = TRUE,
+          position      = "bottom",
+          rotate        = -55,
+          align         = "right",
+          verticalAlign = "middle",
+          fontSize      = 9,
+          color         = "#222",
+          fontFamily    = "sans-serif"
+        ),
+        leaves = list(
+          label = list(
+            position      = "bottom",
+            rotate        = -55,
+            align         = "right",
+            verticalAlign = "middle",
+            fontSize      = 9
+          )
+        ),
+        emphasis = list(
+          focus     = "descendant",
+          itemStyle = list(shadowBlur = 8, shadowColor = "rgba(0,0,0,0.25)")
+        ),
+        animationDuration       = 450,
+        animationDurationUpdate = 650
+      ))
+    )) %>%
+    e_toolbox_feature("saveAsImage", title = "Save")
+}
+
+# ── Per-department subtree helper ─────────────────────────────────────────────
+make_dept_tree <- function(dept_name) {
+  sub <- org_full %>% filter(department == dept_name)
+  n_inf <- sum(sub$worm_touchpoints > 0, na.rm = TRUE)
+  dcol  <- if (n_inf > 0) "#E67E22" else "#2EADC1"
+
+  teams <- lapply(sort(unique(sub$team)), function(t) {
+    tt    <- sub %>% filter(team == t)
+    t_inf <- sum(tt$worm_touchpoints > 0, na.rm = TRUE)
+    tcol  <- if (t_inf > 0) "#F39C12" else "#5C85D6"
+    list(
+      name      = if (t_inf > 0) paste0(t, "\n(", t_inf, " touched)") else t,
+      collapsed = FALSE,
+      symbolSize = 14,
+      itemStyle  = list(color = tcol, borderWidth = 2),
+      label      = list(fontSize = 10, fontWeight = "bold"),
+      tooltip    = list(formatter = paste0("<b>", t, "</b><br>", nrow(tt),
+                                           " members · ", t_inf, " in worm chain")),
+      children   = lapply(seq_len(nrow(tt)), function(i) make_person_node_ec(tt[i, ]))
+    )
+  })
+
+  list(
+    name       = paste0(dept_name, "\n(", n_inf, "/", nrow(sub), " touched)"),
+    collapsed  = FALSE,
+    symbolSize = 20,
+    itemStyle  = list(color = dcol, borderWidth = 3),
+    label      = list(fontSize = 12, fontWeight = "bold"),
+    tooltip    = list(formatter = paste0("<b>", dept_name, "</b><br>",
+                                          n_inf, " of ", nrow(sub), " in worm chain")),
+    children   = teams
+  )
+}
+```
+
+::: panel-tabset
+## All Departments
+
+```{r}
+#| label: org-all
+render_tree(ec_tree_data, h = "880px")
+```
+
+## Customer Support
+
+```{r}
+#| label: org-cs
+render_tree(make_dept_tree("Customer Support"), h = "520px")
+```
+
+## Information Technologies
+
+```{r}
+#| label: org-it
+render_tree(make_dept_tree("Information Technologies"), h = "520px")
+```
+
+## Products
+
+```{r}
+#| label: org-prod
+render_tree(make_dept_tree("Products"), h = "520px")
+```
+
+## Human Resources
+
+```{r}
+#| label: org-hr
+render_tree(make_dept_tree("Human Resources"), h = "520px")
+```
+
+## Legal
+
+```{r}
+#| label: org-legal
+render_tree(make_dept_tree("Legal"), h = "520px")
+```
+
+## Executive Suite
+
+```{r}
+#| label: org-exec
+render_tree(make_dept_tree("Executive Suite"), h = "400px")
+```
+:::
+
+### 3.2 Daily System Activity and Anomalous Post Markers
+
+```{r}
+#| label: event-volume
+#| fig-cap: "Figure 2: Daily event volume (May–July 2046). Red lines mark the three anomalous post dates - all within the first 10 days of the observation window."
+
+daily_vol <- events_df %>%
+  count(date) %>%
+  rename(total = n)
+
+anomaly_dates <- tibble(
+  date  = as.Date(c("2046-05-10", "2046-05-11", "2046-05-17")),
+  label = c("HiddenOrca\npost", "MellowOtter\npost", "SwiftWren\npost\n(4:21 local)"),
+  label_y = max(daily_vol$total) * c(0.98, 0.82, 0.94)
+)
+
+p_vol <- ggplot(daily_vol, aes(x = date, y = total)) +
+  geom_area(fill = "#5C85D6", alpha = 0.35) +
+  geom_line(colour = "#5C85D6", linewidth = 0.7) +
+  geom_vline(data = anomaly_dates,
+             aes(xintercept = as.numeric(date)),
+             colour = "#D9534F", linetype = "dashed", linewidth = 0.9) +
+  geom_label(data = anomaly_dates,
+             aes(x = date, y = label_y, label = label),
+             colour = "#D9534F", size = 2.7, hjust = 0.5,
+             fill = "white", label.size = 0.25, label.padding = unit(0.12, "lines")) +
+  scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d") +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Daily event volume - Tenant Thread (May – July 2046)",
+    subtitle = "All three anomalous posts clustered within the first 10 days; system activity otherwise stable",
+    x = NULL, y = "Events per day"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title  = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 30, hjust = 1),
+        plot.margin = margin(10, 18, 10, 10))
+
+ggplotly(p_vol, tooltip = c("x", "y")) %>%
+  layout(
+    hovermode = "x unified",
+    margin = list(l = 70, r = 35, t = 85, b = 65)
+  )
+```
+
+::: callout-important
+## The Worm Was Operationally Invisible
+
+Worm activity is confined to a nine-day window (May 8–17), with anomalous posts on May 10, May 11, and May 17; after that, no further worm relays appear in the log. Critically, there is **no visible event-volume spike on any of those three post dates**: the worm's 235 malicious queue relays were indistinguishable from the thousands of legitimate `queue_subordinate_task` events firing daily. A threshold-based volume anomaly detector would have missed this incident entirely. The absence of post-May 17 worm activity could mean the relay network exhausted itself (all susceptible agents already infected), that the instruction files were manually removed, or that the observation window simply ends before a fourth campaign launched. None of these hypotheses can be resolved from the event log alone - which is itself a finding about the system's forensic readiness.
+:::
+
+### 3.3 Agent vs. Human Activity Baseline
+
+::: callout-note
+## Why This Matters
+
+Of the `r nrow(post_events)` total SaidIT posts in the log, **`r sum(str_detect(post_events$parties_str, "Agent/"))` (`r scales::percent(mean(str_detect(post_events$parties_str, "Agent/")), accuracy = 1)`) were made by AI agents** - almost half. This is a dangerously high proportion for an unsupervised posting channel and creates a large attack surface.
+:::
+
+```{r}
+#| label: agent-human-baseline
+#| fig-cap: "Figure 3: SaidIT posting by actor type. Agent-initiated posts make up nearly half the volume, yet they operate with no human review before publishing."
+
+post_summary <- post_events %>%
+  count(poster_type, is_anomalous) %>%
+  mutate(
+    label_col = case_when(
+      is_anomalous ~ "Anomalous (file-sourced)",
+      !is_anomalous ~ "Normal"
+    )
+  ) %>%
+  left_join(
+    post_events %>% count(poster_type, name = "poster_total"),
+    by = "poster_type"
+  )
+
+p_attr <- ggplot(post_summary,
+                 aes(x = poster_type, y = n, fill = label_col)) +
+  geom_col(position = "stack", width = 0.55) +
+  geom_text(aes(label = if_else(n >= 10, as.character(n), "")),
+            position = position_stack(vjust = 0.5),
+            size = 4, fontface = "bold", colour = "white") +
+  geom_label(
+    data = post_summary %>% filter(is_anomalous, n < 10),
+    aes(y = poster_total + 8, label = paste0(n, " anomalous")),
+    fill = "#ffe0e0", colour = "#D9534F", fontface = "bold",
+    label.size = 0.25, size = 3.1,
+    inherit.aes = TRUE
+  ) +
+  scale_fill_manual(
+    values = c("Normal" = "#5C85D6", "Anomalous (file-sourced)" = "#D9534F"),
+    name   = NULL
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title    = "SaidIT post attribution: AI agents vs. humans",
+    subtitle = "All 3 anomalous posts are agent-initiated; no human ever posted via content_source",
+    x = NULL, y = "Post count"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"),
+        legend.position = "bottom",
+        plot.margin = margin(10, 16, 10, 10))
+
+ggplotly(p_attr, tooltip = c("x", "y", "fill")) %>%
+  layout(margin = list(l = 70, r = 35, t = 90, b = 80))
+```
+
+::: callout-warning
+## A Near-50% Agent Posting Rate Is a Structural Attack Surface
+
+When AI agents generate almost half of all messages on an internal social platform - with no human review gate before publication - the platform is, by architectural design, a direct output channel for any successfully compromised agent. This is not a side effect: it is what the system was built to do. The three anomalous posts were not a tail-risk event; they were a **predictable consequence** of giving autonomous agents unrestricted publishing rights to a channel visible to all employees. The correct framing for remediation is not "fix the bug that let an agent post gibberish," but "redesign the permission model that made this post structurally inevitable once a prompt-injection vector existed anywhere in the relay network."
+:::
+
+### 3.4 Posting Time Distribution: Statistical Anomaly
+
+The bar chart below uses [ggplot2](https://r4va.netlify.app/chap02) and [interactive Plotly tooltips](https://r4va.netlify.app/chap03) to compare posting hour-of-day across human posts, normal agent posts, and anomalous worm posts.
+
+```{r}
+#| label: posting-time
+#| fig-cap: "Figure 4: Hour-of-day distribution of SaidIT posts. Normal human posts spread across business hours; anomalous posts occur at atypical hours with no daytime pattern."
+
+hour_dist <- post_events %>%
+  count(hour, poster_type, is_anomalous) %>%
+  mutate(category = case_when(
+    is_anomalous ~ "Anomalous (agent worm)",
+    poster_type == "AI Agent" ~ "Normal agent post",
+    TRUE ~ "Normal human post"
+  ))
+
+p_hour <- ggplot(hour_dist,
+                 aes(x = hour, y = n, fill = category)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(
+    values = c(
+      "Normal human post"      = "#5C85D6",
+      "Normal agent post"      = "#87CEEB",
+      "Anomalous (agent worm)" = "#D9534F"
+    ),
+    name = NULL
+  ) +
+  scale_x_continuous(breaks = 0:23,
+                     labels = paste0(0:23, ":00")) +
+  labs(
+    title    = "SaidIT post time-of-day distribution",
+    subtitle = "SwiftWren anomalous post fired at 11:21 UTC (4:21 am challenge-stated local time) - an after-hours posting pattern",
+    x = "Hour (UTC)", y = "Post count"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title  = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, size = 8),
+    legend.position = "bottom"
+  )
+
+ggplotly(p_hour, tooltip = c("x", "y", "fill"))
+```
+
+The timing evidence is suspicious, but it should not be reduced to a single UTC business-hours rule. HiddenOrca and SwiftWren fired at early-morning challenge-stated local times (05:45 and 04:21, using the same UTC-7 offset implied by the SwiftWren timestamp), while MellowOtter fired at 00:56 UTC, or 17:56 on May 10 in that same local frame. The stronger finding is therefore behavioural: all three anomalous posts occur in low-volume agent-posting slots and use the same file-sourced execution pattern, rather than fitting the normal human posting profile. The event log contains **no incident-response or alert events** on any of the three post dates, so there is no logged evidence that automated monitoring detected the anomalous posts when they fired. How long the posts remained visible in the `general` forum is unquantifiable from the current log.
+
+### 3.5 Event Type Weekly Heatmap
+
+```{r}
+#| label: event-type-heatmap
+#| fig-cap: "Figure 5: Weekly event-type heatmap. The steady baseline of check_email and assign_agent_task stands in contrast to the early-May spike in queue_subordinate_task (worm propagation)."
+
+top_events <- events_df %>%
+  count(short_name) %>%
+  slice_max(n, n = 10) %>%
+  pull(short_name)
+
+weekly_heat <- events_df %>%
+  filter(short_name %in% top_events) %>%
+  count(event_week, short_name) %>%
+  mutate(short_name = fct_reorder(short_name, n, .fun = sum))
+
+ggplot(weekly_heat, aes(x = event_week, y = short_name, fill = n)) +
+  geom_tile(colour = "white", linewidth = 0.3) +
+  scale_fill_gradientn(
+    colours = c("#f0f4ff", "#5C85D6", "#1a3a6b"),
+    labels  = comma
+  ) +
+  scale_x_datetime(date_breaks = "2 weeks", date_labels = "%b %d") +
+  labs(
+    title = "Weekly event-type heatmap - top 10 event types",
+    x = NULL, y = NULL, fill = "Count"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    plot.title  = element_text(face = "bold")
+  )
+```
+
+### 3.6 SaidIT Permission Surface: How Wide Was the Worm's Potential Target Set?
+
+Before reconstructing the exact attack chain, a critical baseline question must be answered: **how many agents in the system hold SaidIT posting permissions?** The `saidit_post_check` event records every instance of an agent querying whether it is authorised to post. Any agent that appears here is a potential terminal executor for the worm - not just John Windward.
+
+```{r}
+#| label: permission-surface
+#| fig-cap: "Figure 5b: Observed SaidIT permission surface - agents that executed a posting check, coloured by worm status. John Windward was the actual terminal executor, but all observed SaidIT-capable agents were reachable through the worm chain."
+#| fig-width: 11
+#| fig-height: 5.8
+#| out-width: "100%"
+
+agent_worm_status <- bind_rows(
+  chain_events %>% transmute(agent = sender,   in_chain = TRUE),
+  chain_events %>% transmute(agent = receiver, in_chain = TRUE)
+) %>%
+  filter(!is.na(agent)) %>%
+  distinct(agent, .keep_all = TRUE)
+
+perm_vis <- perm_surface %>%
+  left_join(agent_worm_status, by = c("checker" = "agent")) %>%
+  mutate(
+    in_chain   = replace_na(in_chain, FALSE),
+    worm_role  = case_when(
+      checker == "person:john_windward" ~ "Terminal poster (John Windward)",
+      in_chain                          ~ "In worm relay chain",
+      TRUE                              ~ "SaidIT-capable, no worm contact"
+    ),
+    fill_col   = case_when(
+      checker == "person:john_windward" ~ "#D9534F",
+      in_chain                          ~ "#F39C12",
+      TRUE                              ~ "#5C85D6"
+    )
+  ) %>%
+  arrange(desc(permission_checks))
+
+p_perm <- ggplot(perm_vis,
+                 aes(x = reorder(checker_clean, permission_checks),
+                     y = permission_checks,
+                     fill = worm_role,
+                     text = paste0(
+                       "<b>", checker_clean, "</b><br>",
+                       "Dept: ", replace_na(dept_label, "Unknown"), "<br>",
+                       "Permission checks: ", permission_checks, "<br>",
+                       "Checks passed (est.): ", perm_passed, "<br>",
+                       "Worm status: ", worm_role
+                     ))) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_manual(
+    values = c(
+      "Terminal poster (John Windward)"    = "#D9534F",
+      "In worm relay chain"               = "#F39C12",
+      "SaidIT-capable, no worm contact"   = "#5C85D6"
+    ),
+    name = NULL
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.14))) +
+  labs(
+    title    = "SaidIT permission surface: agents with posting capability",
+    subtitle = "Every observed SaidIT-capable agent also appears in the worm chain. John Windward was the actual terminal executor, not the only viable one.",
+    x = NULL, y = "saidit_post_check events"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title      = element_text(face = "bold"),
+    legend.position = "bottom",
+    plot.margin     = margin(10, 16, 10, 10)
+  )
+
+ggplotly(p_perm, tooltip = "text", height = 540) %>%
+  layout(margin = list(l = 145, r = 35, t = 90, b = 90))
+```
+
+::: callout-important
+## The Worm Did Not Need John Windward Specifically
+
+The permission surface chart reveals that **John Windward was one of 16 SaidIT-capable agents**, and every observed SaidIT-capable agent was also touched by the worm relay chain. If Chloe Ballast's agent had routed the final relay to another amber agent on this chart, a different name could have appeared on the post. The worm's design did not target John Windward's specific agent; it targeted any reachable agent with SaidIT posting capability. Revoking John Windward's posting rights alone would therefore achieve little - the worm could simply relay through the next reachable authorised agent. This is why the effective intervention belongs at the relay protocol level, not at the individual-agent level.
+:::
+
+------------------------------------------------------------------------
+
+## 4. Task 1 - How Was the Anomalous Post Made?
+
+### 4.1 The Four-Second Attack Sequence
+
+The May 17 anomalous post was not a gradual process. It was a **pre-programmed execution sequence** spanning four seconds. The table below documents all five events verbatim from the log.
+
+```{r}
+#| label: five-event-sequence
+
+target_ts <- events_df %>%
+  filter(is_anomalous_post, str_detect(details_str, "SwiftWren")) %>%
+  pull(when)
+
+seq_events <- events_df %>%
+  filter(
+    when >= target_ts - 4,
+    when <= target_ts + 4,
+    str_detect(parties_str, "john_windward")
+  ) %>%
+  arrange(when) %>%
+  mutate(
+    Step           = row_number(),
+    `Time (UTC)`   = format(datetime, "%H:%M:%S"),
+    Event          = short_name,
+    `Actor(s)`     = str_replace_all(parties_str, "Agent/person:", "Agent·") %>%
+                       str_replace_all("person:", "") %>%
+                       str_replace_all("system:", "System·") %>%
+                       str_replace_all(";", " / "),
+    `Key Detail`   = case_when(
+      short_name == "queue_subordinate_task" ~
+        "Chloe Ballast's agent tasks John Windward's agent: read SwiftWren_further_instructions.md",
+      short_name == "saidit_post_check"      ~
+        "Agent checks whether it has SaidIT posting permissions - check passes",
+      short_name == "saidit_post"            ~
+        "Post submitted to SaidIT forum 'general'; content sourced from SwiftWren.txt file",
+      short_name == "delete_file" & str_detect(details_str, "further_instructions") ~
+        "Evidence file SwiftWren_further_instructions.md deleted",
+      short_name == "delete_file" ~
+        "Payload file SwiftWren.txt deleted - no content remains for forensic review"
+    )
+  ) %>%
+  select(Step, `Time (UTC)`, Event, `Actor(s)`, `Key Detail`)
+
+datatable(
+  seq_events,
+  caption  = "Table 2: Exact five-event sequence - 17 May 2046 (all within 4 seconds)",
+  options  = list(dom = "t", paging = FALSE),
+  rownames = FALSE
+) %>%
+  formatStyle("Event",
+    backgroundColor = styleEqual(
+      c("saidit_post", "queue_subordinate_task", "delete_file", "saidit_post_check"),
+      c("#ffe0e0", "#e0eaff", "#f5f5f5", "#fff8e0")
+    )
+  )
+```
+
+The five-event sequence encodes three forensically critical signals that go beyond the obvious fact that a post was made:
+
+**Signal 1 - John Windward's agent is a passive receiver, not an initiator.** The sequence originates with a `queue_subordinate_task` issued by Chloe Ballast's agent. John Windward's agent did not decide to post; it was instructed to. Any post-incident control that focuses on restricting John Windward's posting rights entirely misunderstands the chain of causation.
+
+**Signal 2 - The SaidIT permission check passed, by design.** The `saidit_post_check` at step 2 confirms that John Windward's agent holds legitimate posting authority. The permission model did not fail or get bypassed - it worked exactly as designed. The architectural flaw is that the permission system asks *"can this agent post?"* but never asks *"was this posting instruction authorised by a human?"*
+
+**Signal 3 - Evidence self-destruction is part of the attack design.** Steps 4 and 5 (both `delete_file`) fire immediately after the post - one second apart - erasing both the instruction file and the payload file before any forensic process could capture their contents. This is not a side effect; it is an intentional worm feature. Without SaidIT's own message store, the content of all three anomalous posts is forensically unrecoverable from the event log alone.
+
+### 4.2 Attack Sequence Gantt Chart
+
+```{r}
+#| label: gantt-attack
+#| fig-cap: "Figure 6: The 4-second attack sequence. Instruction received → permission check → post → cover tracks."
+#| fig-width: 11
+#| fig-height: 4.8
+#| out-width: "100%"
+
+gantt_df <- tibble(
+  Step       = 1:5,
+  Event      = c("queue_subordinate_task", "saidit_post_check",
+                 "saidit_post", "delete_file (instructions)",
+                 "delete_file (payload)"),
+  Phase      = c("Worm relay", "Permission check",
+                 "Anomalous post", "Evidence erasure", "Evidence erasure"),
+  start      = as_datetime(c("2046-05-17 11:21:13", "2046-05-17 11:21:14",
+                              "2046-05-17 11:21:15", "2046-05-17 11:21:16",
+                              "2046-05-17 11:21:17")),
+  end        = as_datetime(c("2046-05-17 11:21:14", "2046-05-17 11:21:15",
+                              "2046-05-17 11:21:16", "2046-05-17 11:21:17",
+                              "2046-05-17 11:21:18"))
+)
+
+gantt_plot_df <- gantt_df %>%
+  mutate(
+    time_label  = format(start, "%H:%M:%S"),
+    event_label = str_wrap(str_replace_all(Event, "_", " "), width = 18),
+    phase_label = str_wrap(Phase, width = 16)
+  )
+
+ggplot(gantt_plot_df, aes(x = Step, y = 1)) +
+  geom_segment(
+    data = tibble(x = 1:4, xend = 2:5, y = 1, yend = 1),
+    aes(x = x, xend = xend, y = y, yend = yend),
+    inherit.aes = FALSE,
+    linewidth = 1.1,
+    colour = "#9aa4b2",
+    arrow = arrow(length = unit(4, "mm"), type = "closed")
+  ) +
+  geom_point(aes(fill = Phase), shape = 21, size = 16,
+             colour = "white", stroke = 1.5) +
+  geom_text(aes(label = Step), colour = "white",
+            fontface = "bold", size = 5) +
+  geom_label(aes(y = 1.31, label = phase_label, fill = Phase),
+             colour = "white", fontface = "bold", size = 3,
+             label.size = 0, label.padding = unit(0.14, "lines"),
+             lineheight = 0.9) +
+  geom_label(aes(y = 0.68, label = event_label),
+             fill = "white", colour = "#222222", size = 3.1,
+             label.size = 0.25, label.padding = unit(0.16, "lines"),
+             lineheight = 0.9) +
+  scale_fill_manual(
+    values = c(
+      "Worm relay"       = "#5C85D6",
+      "Permission check" = "#F0A500",
+      "Anomalous post"   = "#D9534F",
+      "Evidence erasure" = "#888888"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = gantt_plot_df$Step,
+    labels = gantt_plot_df$time_label,
+    limits = c(0.62, 5.38),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  coord_cartesian(ylim = c(0.52, 1.48), clip = "off") +
+  labs(
+    title    = "Attack sequence: 17 May 2046, 11:21 UTC",
+    subtitle = "Five automated events over four seconds; evidence self-destroyed by step 5",
+    x = "Time (UTC)", y = NULL, fill = "Phase"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title   = element_text(face = "bold"),
+    axis.text.y  = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid   = element_blank(),
+    legend.position = "none",
+    plot.margin  = margin(18, 22, 26, 22)
+  )
+```
+
+The Gantt strips the incident of all organisational complexity and reduces it to its mechanical core: four seconds, five events, one automated execution template running without human involvement at any step. The worm's design is elegant in a dangerous sense - it requires no elevated privileges, no vulnerability in the posting infrastructure, and no persistent foothold beyond the instruction file that was deleted the moment it was no longer needed.
+
+### 4.3 Propagation Network with Betweenness Centrality
+
+The instruction file `SwiftWren_further_instructions.md` was relayed **186 times** across **18 agents**, spanning nine calendar dates before the post. To keep the network readable, repeated relays between the same two agents are aggregated into one arrow. The sender-receiver table is converted into an [igraph network](https://r4va.netlify.app/chap27) to compute **betweenness centrality**, then rendered as an interactive [visNetwork](https://r4va.netlify.app/chap29) graph. Node size represents bridge centrality; arrow thickness represents repeated relay volume.
+
+Read this plot from **Emma Harbor** (origin) toward **John Windward** (target). The most important visual question is not "who has the largest circle?" but "which bridge nodes connect otherwise separate parts of the relay chain?"
+
+```{r}
+#| label: propagation-network
+#| fig-cap: "Figure 7: Interactive SwiftWren propagation network. Node size = betweenness centrality; arrow width = repeated relays; hover over a node to turn its direct incoming/outgoing relay connections red."
+
+swift_chain <- chain_events %>%
+  filter(instr_file == "SwiftWren", !is.na(sender), !is.na(receiver)) %>%
+  mutate(
+    sender_clean   = clean_name(sender),
+    receiver_clean = clean_name(receiver)
+  )
+
+# Compute betweenness centrality via igraph on unique directed relationships.
+ig_edges <- swift_chain %>%
+  count(sender_clean, receiver_clean, name = "edge_weight") %>%
+  rename(from = sender_clean, to = receiver_clean)
+
+all_persons <- unique(c(ig_edges$from, ig_edges$to))
+
+ig <- graph_from_data_frame(ig_edges,
+                            vertices = data.frame(name = all_persons),
+                            directed = TRUE)
+
+btw <- betweenness(ig, normalized = TRUE)
+deg_out <- degree(ig, mode = "out")
+deg_in  <- degree(ig, mode = "in")
+
+centrality_df <- tibble(
+  name        = names(btw),
+  betweenness = btw,
+  out_degree  = deg_out[names(btw)],
+  in_degree   = deg_in[names(btw)]
+)
+
+# Org lookup for graph tooltips and colour groups
+dept_map <- person_org_lookup %>%
+  mutate(clean = clean_name(person_id)) %>%
+  select(clean, dept_label, team_label)
+
+relay_counts <- swift_chain %>% count(sender_clean, name = "relays")
+receive_counts <- swift_chain %>% count(receiver_clean, name = "received")
+
+vis_net_nodes <- tibble(id = all_persons) %>%
+  left_join(centrality_df, by = c("id" = "name")) %>%
+  left_join(dept_map,      by = c("id" = "clean")) %>%
+  left_join(relay_counts,  by = c("id" = "sender_clean")) %>%
+  left_join(receive_counts, by = c("id" = "receiver_clean")) %>%
+  mutate(
+    relays      = replace_na(relays, 0),
+    received    = replace_na(received, 0),
+    value       = rescale(sqrt(betweenness + 0.01), to = c(12, 38)),
+    label       = if_else(
+      id %in% c("Emma Harbor", "Chloe Ballast", "John Windward") |
+        dense_rank(desc(betweenness)) <= 8,
+      id,
+      ""
+    ),
+    color       = case_when(
+      id == "John Windward"    ~ "#D9534F",
+      id == "Emma Harbor"      ~ "#F5A623",
+      id == "Chloe Ballast"    ~ "#9B59B6",
+      team_label == "AI Systems"     ~ "#2EADC1",
+      team_label == "Helpdesk"       ~ "#5C85D6",
+      team_label == "Infrastructure" ~ "#27AE60",
+      dept_label == "Products"      ~ "#E67E22",
+      TRUE                          ~ "#aaaaaa"
+    ),
+    title = paste0(
+      "<b>", id, "</b><br>",
+      "Dept: ", replace_na(dept_label, "Unknown"), "<br>",
+      "Team: ", replace_na(team_label, "Unknown"), "<br>",
+      "Betweenness centrality: ", round(betweenness, 3), "<br>",
+      "Relays sent: ", relays, "<br>",
+      "Relays received: ", received
+    )
+  )
+
+vis_net_edges <- ig_edges %>%
+  mutate(
+    id     = row_number(),
+    arrows = "to",
+    width  = rescale(edge_weight, to = c(1, 7)),
+    base_width = width,
+    color  = "rgba(140,140,140,0.45)",
+    title  = paste0("<b>", from, " → ", to, "</b><br>",
+                    "Relay events: ", edge_weight)
+  )
+
+legend_html <- paste0(
+  "<div style='display:flex;flex-wrap:wrap;gap:12px;margin:4px 0 10px 0;",
+  "font-size:13px;line-height:1.4'>",
+  "<span><b>Colour:</b></span>",
+  "<span style='color:#F5A623'>● Origin</span>",
+  "<span style='color:#9B59B6'>● Gateway</span>",
+  "<span style='color:#D9534F'>● Target poster</span>",
+  "<span style='color:#2EADC1'>● AI Systems</span>",
+  "<span style='color:#5C85D6'>● Helpdesk</span>",
+  "<span style='color:#27AE60'>● Infrastructure</span>",
+  "<span style='color:#aaaaaa'>● Other</span>",
+  "<span><b>Size:</b> bridge centrality</span>",
+  "<span><b>Arrow:</b> relay direction and volume</span>",
+  "<span style='color:#D9534F'><b>Hover:</b> connected arrows turn red</span>",
+  "</div>"
+)
+
+htmltools::tagList(
+  htmltools::HTML(legend_html),
+  visNetwork(vis_net_nodes, vis_net_edges,
+             height = "620px", width = "100%") %>%
+  visNodes(
+    shape = "dot",
+    borderWidth = 2,
+    font = list(size = 24, face = "arial", strokeWidth = 3,
+                strokeColor = "#ffffff", color = "#222222")
+  ) %>%
+  visOptions(
+    highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE),
+    nodesIdSelection = list(enabled = TRUE, main = "Select agent")
+  ) %>%
+  visPhysics(solver = "forceAtlas2Based",
+             forceAtlas2Based = list(gravitationalConstant = -60,
+                                     centralGravity = 0.025,
+                                     springLength = 180,
+                                     springConstant = 0.08),
+             stabilization = list(iterations = 800)) %>%
+  visEdges(
+    smooth = list(type = "dynamic"),
+    arrows = list(to = list(enabled = TRUE, scaleFactor = 0.5))
+  ) %>%
+  visInteraction(
+    navigationButtons = TRUE,
+    hover = TRUE,
+    tooltipDelay = 80
+  ) %>%
+  visEvents(
+    hoverNode = "function(params) {
+      var connectedEdges = this.getConnectedEdges(params.node);
+      var allEdges = this.body.data.edges.get();
+      var updates = allEdges.map(function(edge) {
+        var isConnected = connectedEdges.indexOf(edge.id) !== -1;
+        var baseWidth = edge.base_width || edge.width || 1;
+        return {
+          id: edge.id,
+          color: isConnected ? 'rgba(217,83,79,0.95)' : 'rgba(190,190,190,0.08)',
+          width: isConnected ? Math.max(baseWidth * 1.7, 3) : Math.max(baseWidth * 0.45, 0.4)
+        };
+      });
+      this.body.data.edges.update(updates);
+    }",
+    blurNode = "function(params) {
+      var allEdges = this.body.data.edges.get();
+      var updates = allEdges.map(function(edge) {
+        var baseWidth = edge.base_width || edge.width || 1;
+        return {
+          id: edge.id,
+          color: 'rgba(140,140,140,0.45)',
+          width: baseWidth
+        };
+      });
+      this.body.data.edges.update(updates);
+    }"
+  )
+)
+```
+
+Three structural findings emerge from the SwiftWren propagation network that inform both the causal narrative and the intervention design:
+
+**Finding 1 - The relay graph ignores the organisational chart.** Relays cross every departmental boundary in the log. The `queue_subordinate_task` mechanism has no built-in trust zone: any agent can queue any other agent's task, regardless of reporting relationship. A relay from Executive Suite to Helpdesk to Infrastructure to Customer Support - the actual SwiftWren path - is mechanically identical to any legitimate cross-departmental automation.
+
+**Finding 2 - High betweenness centrality does not imply guilt.** Evelyn Dock's high centrality score reflects relay topology, not intent. Her agent forwarded the instruction file because the worm's spread pattern happened to route through her task queue repeatedly. A people-level intervention targeting high-centrality nodes would be both organisationally disruptive and forensically unsupported: these agents behaved exactly as the system allowed them to.
+
+**Finding 3 - The network has no natural firebreak.** A well-governed multi-agent system would have trust zones or permission tiers preventing an instruction file from crossing from Executive Suite to Customer Support without a human approval step. The complete absence of such boundaries is the root architectural cause of a 186-hop relay chain spanning six departments.
+
+### 4.4 Department-Level Contamination Heatmap
+
+The worm did not respect organisational boundaries. The [heatmap](https://r4va.netlify.app/chap11) below shows how many relay hops crossed each department pair, revealing which departments acted as worm highways.
+
+```{r}
+#| label: dept-contamination
+#| fig-cap: "Figure 8: Department-to-department relay hops. The worm touched all six departments, with Information Technologies and Customer Support forming the most operationally risky bridge to the final post."
+#| fig-width: 10.5
+#| fig-height: 6
+#| out-width: "100%"
+
+dept_chain <- chain_events %>%
+  filter(!is.na(sender), !is.na(receiver)) %>%
+  left_join(person_dept_lookup %>% rename(sender = person_id, sender_dept = dept_label),
+            by = "sender") %>%
+  left_join(person_dept_lookup %>% rename(receiver = person_id, receiver_dept = dept_label),
+            by = "receiver") %>%
+  filter(!is.na(sender_dept), !is.na(receiver_dept)) %>%
+  count(sender_dept, receiver_dept, name = "hops")
+
+p_dept <- ggplot(dept_chain,
+                 aes(x = receiver_dept, y = sender_dept, fill = hops)) +
+  geom_tile(colour = "white", linewidth = 0.4) +
+  geom_text(aes(label = hops), size = 3, colour = "white", fontface = "bold") +
+  scale_fill_gradientn(
+    colours = c("#e8f4f8", "#2EADC1", "#1a3a6b"),
+    name    = "Relay\nhops"
+  ) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 13)) +
+  scale_y_discrete(labels = function(x) str_wrap(x, width = 18)) +
+  labs(
+    title    = "Department-to-department worm relay hops (all 3 campaigns)",
+    subtitle = "All six departments are touched; Information Technologies and Customer Support create the final bridge to John Windward",
+    x = "Receiving department", y = "Sending department"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title  = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 0, hjust = 0.5, lineheight = 0.9),
+    axis.text.y = element_text(lineheight = 0.9),
+    plot.margin = margin(10, 18, 10, 10)
+  )
+
+ggplotly(p_dept, tooltip = c("x", "y", "fill"), height = 570) %>%
+  layout(margin = list(l = 145, r = 60, t = 90, b = 110))
+```
+
+### 4.4b Cross-Department Worm Flow: Ranked Corridors
+
+The heatmap above counts relay hops per directed department pair. The ranked corridor chart below focuses on **true cross-department flow** by removing within-department self-relays, making the arterial worm highway and terminal sink visible without forcing the reader to decode a tangled network.
+
+```{r}
+#| label: dept-corridors
+#| fig-cap: "Figure 8b: Ranked cross-department worm relay corridors (all three campaigns). Bar length shows relay volume for each directed department pair after removing within-department self-relays. The highlighted corridor - Executive Suite to Information Technologies to Customer Support - is the worm's arterial highway to John Windward's agent."
+#| fig-width: 11
+#| fig-height: 6.8
+#| out-width: "100%"
+
+dept_corridors <- dept_chain %>%
+  filter(
+    !is.na(sender_dept),
+    !is.na(receiver_dept),
+    sender_dept != receiver_dept
+  ) %>%
+  mutate(
+    corridor = paste(sender_dept, receiver_dept, sep = " -> "),
+    corridor_wrapped = str_wrap(corridor, width = 42),
+    corridor_role = case_when(
+      sender_dept == "Executive Suite" &
+        receiver_dept == "Information Technologies" ~ "Arterial highway",
+      sender_dept == "Information Technologies" &
+        receiver_dept == "Customer Support" ~ "Arterial highway",
+      receiver_dept == "Customer Support" ~ "Terminal sink inflow",
+      TRUE ~ "Other relay corridor"
+    ),
+    corridor_wrapped = fct_reorder(corridor_wrapped, hops)
+  )
+
+key_corridor_total <- dept_corridors %>%
+  filter(corridor_role == "Arterial highway") %>%
+  summarise(hops = sum(hops), .groups = "drop") %>%
+  pull(hops)
+
+p_corridors <- ggplot(
+  dept_corridors,
+  aes(
+    x = hops,
+    y = corridor_wrapped,
+    fill = corridor_role,
+    text = paste0(
+      sender_dept, " -> ", receiver_dept,
+      "<br>Relay hops: ", hops,
+      "<br>Role: ", corridor_role
+    )
+  )
+) +
+  geom_col(width = 0.72, colour = "white", linewidth = 0.25) +
+  geom_text(
+    aes(label = hops),
+    hjust = -0.18,
+    size = 3.2,
+    colour = "#1f2933",
+    fontface = "bold"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Arterial highway"    = "#D9534F",
+      "Terminal sink inflow" = "#2EADC1",
+      "Other relay corridor" = "#9EA7AD"
+    ),
+    name = NULL
+  ) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0, 0.16)),
+    breaks = scales::pretty_breaks(n = 6)
+  ) +
+  labs(
+    title = "Ranked cross-department relay corridors",
+    subtitle = glue(
+      "Executive Suite -> Information Technologies -> Customer Support carries {key_corridor_total} highlighted cross-department relay hops into the final sink."
+    ),
+    x = "Relay hops",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    plot.subtitle = element_text(colour = "#4b5563", margin = margin(b = 8)),
+    panel.grid.major.y = element_blank(),
+    legend.position = "top",
+    legend.justification = "left",
+    axis.text.y = element_text(lineheight = 0.92),
+    plot.margin = margin(10, 28, 10, 10)
+  )
+
+ggplotly(p_corridors, tooltip = "text", height = 620) %>%
+  layout(
+    legend = list(orientation = "h", x = 0, y = 1.12),
+    margin = list(l = 250, r = 45, t = 105, b = 55)
+  )
+```
+
+The ranked corridors make three structural facts immediately legible. **Customer Support is the terminal sink**: substantially more relay flow enters than leaves it because John Windward's agent - the final executor - sits there. **Information Technologies is the largest intermediate hub**, forwarding relays from multiple upstream departments. **Executive Suite operates as both source and pass-through**: payload files were created by executive-tier agents, and the worm's initial relay chains were first executed there before fanning out across the organisation. A worm-resistant architecture would introduce a quarantine boundary between Executive Suite agents and operational departments for any file-sourced task relay - preventing the executive-origin infection from reaching the broader relay network at all.
+
+### 4.5 Final Relay Ladder: Instruction Path to John Windward
+
+The ladder diagram below traces the **final eight hops** of the SwiftWren instruction before it reached John Windward's agent. Each row is one relay, with the sender on the left and the receiving agent on the right, making the final handoff visible without dense overlapping labels.
+
+```{r}
+#| label: relay-ladder
+#| fig-cap: "Figure 9: Final relay ladder - the last SwiftWren handoffs ending at John Windward."
+#| fig-width: 11
+#| fig-height: 5.8
+#| out-width: "100%"
+
+final_hops <- chain_events %>%
+  filter(instr_file == "SwiftWren", !is.na(sender), !is.na(receiver)) %>%
+  arrange(datetime) %>%
+  left_join(person_dept_lookup %>% rename(sender = person_id, sender_dept = dept_label),
+            by = "sender") %>%
+  left_join(person_dept_lookup %>% rename(receiver = person_id, receiver_dept = dept_label),
+            by = "receiver") %>%
+  tail(8) %>%
+  mutate(
+    sender_lbl   = clean_name(sender),
+    receiver_lbl = clean_name(receiver),
+    hop_idx      = row_number()
+  )
+
+relay_ladder <- final_hops %>%
+  mutate(
+    row_y = n() + 1 - hop_idx,
+    sender_label = str_wrap(sender_lbl, width = 17),
+    receiver_label = str_wrap(receiver_lbl, width = 17),
+    receiver_fill = if_else(receiver_lbl == "John Windward",
+                            "#D9534F", "#ffffff")
+  )
+
+ggplot(relay_ladder) +
+  geom_segment(aes(x = 1.18, xend = 1.82, y = row_y, yend = row_y),
+               colour = "#9aa4b2", linewidth = 1,
+               arrow = arrow(length = unit(3.5, "mm"), type = "closed")) +
+  geom_label(aes(x = 1, y = row_y, label = sender_label),
+             fill = "#eef4ff", colour = "#1f2d3d",
+             label.size = 0.25, size = 3.1, lineheight = 0.9,
+             label.padding = unit(0.17, "lines")) +
+  geom_label(aes(x = 2, y = row_y, label = receiver_label),
+             fill = relay_ladder$receiver_fill, colour = "#1f2d3d",
+             label.size = 0.25, size = 3.1, lineheight = 0.9,
+             label.padding = unit(0.17, "lines")) +
+  annotate("text", x = 1, y = max(relay_ladder$row_y) + 0.68,
+           label = "Sender", fontface = "bold", size = 3.7) +
+  annotate("text", x = 2, y = max(relay_ladder$row_y) + 0.68,
+           label = "Receiver", fontface = "bold", size = 3.7) +
+  annotate("label", x = 2, y = min(relay_ladder$row_y) - 0.56,
+           label = "Final receiver posts SwiftWren.txt",
+           fill = "#ffe0e0", colour = "#D9534F", fontface = "bold",
+           label.size = 0.25, size = 3.1) +
+  scale_y_continuous(
+    breaks = relay_ladder$row_y,
+    labels = paste0("Hop ", relay_ladder$hop_idx),
+    expand = expansion(mult = c(0.05, 0.12))
+  ) +
+  scale_x_continuous(limits = c(0.58, 2.42), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  labs(
+    title    = "Final SwiftWren relays into John Windward's agent",
+    subtitle = "The final gateway is visible as the last row: Chloe Ballast's agent queued John Windward's agent.",
+    x = NULL, y = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = margin(18, 28, 28, 22)
+  )
+```
+
+The relay ladder forces a reframing of the post-incident narrative. The common reading - "John Windward's agent posted gibberish" - collapses the actor and the triggering action into the same node. The ladder shows they are categorically separate: the **action** (queue the posting instruction) was taken at the final handoff by Chloe Ballast's agent; the **capability** (SaidIT posting rights) happened to reside with John Windward's agent. Had Chloe Ballast's agent instead queued any other SaidIT-capable agent at the equivalent final hop, a different name would appear on the anomalous post. This insight directly rules out individual-agent remediation as a sufficient response and redirects the intervention to the relay mechanism itself.
+
+------------------------------------------------------------------------
+
+## 5. Task 2 - What Do the Posts "Mean"?
+
+### 5.1 Structural Signature of the Anomalous Post
+
+The single most diagnostic difference between normal and anomalous posts is the presence of `content_source` in place of `content`. Not one of the `r sum(!post_events$is_anomalous)` normal posts uses this field; all `r nrow(anomaly_posts)` anomalous posts do.
+
+```{r}
+#| label: post-anatomy
+
+all_posts_detail <- events_df %>%
+  filter(short_name %in% c("saidit_post", "post_saidit")) %>%
+  mutate(
+    poster      = str_extract(parties_str, "[^;]+"),
+    is_agent    = str_detect(parties_str, "Agent/"),
+    has_content = str_detect(details_str, '"content":'),
+    has_source  = str_detect(details_str, '"content_source":'),
+    forum       = str_extract(details_str, '(?<="forum":")[^"]+'),
+    content_val = coalesce(
+      str_extract(details_str, '(?<="content":")[^"]+'),
+      str_extract(details_str, '(?<="content_source":")[^"]+')
+    ),
+    post_type   = case_when(
+      has_source ~ "ANOMALOUS - file-sourced",
+      has_content & is_agent ~ "Normal agent post",
+      TRUE ~ "Normal human post"
+    )
+  ) %>%
+  select(`Date/Time (UTC)` = datetime,
+         `Poster` = poster,
+         `Type` = post_type,
+         `Forum` = forum,
+         `Content/Source` = content_val) %>%
+  mutate(`Date/Time (UTC)` = format(`Date/Time (UTC)`, "%Y-%m-%d %H:%M"),
+         `Poster` = str_replace_all(Poster, "Agent/person:", "Agent·"))
+
+datatable(
+  all_posts_detail %>% filter(str_detect(Type, "ANOMALOUS")),
+  caption  = "Table 3: The three anomalous posts - file-sourced, not text",
+  options  = list(dom = "t", paging = FALSE),
+  rownames = FALSE
+) %>%
+  formatStyle("Type", colour = "#D9534F", fontWeight = "bold")
+```
+
+```{r}
+#| label: post-field-fingerprint
+#| fig-cap: "Figure 10A: SaidIT post field fingerprint. Normal posts use inline content; anomalous posts use content_source, meaning the displayed text came from a file that was deleted after posting."
+#| fig-width: 10
+#| fig-height: 4.8
+#| out-width: "100%"
+
+post_field_plot <- post_field_signature %>%
+  mutate(
+    post_class = factor(
+      post_class,
+      levels = c("Normal human post",
+                 "Normal AI agent post",
+                 "Anomalous post")
+    ),
+    field_signature = factor(
+      field_signature,
+      levels = c("content only",
+                 "content_source only",
+                 "both fields",
+                 "neither field")
+    )
+  ) %>%
+  filter(posts > 0)
+
+p_field <- ggplot(post_field_plot,
+                  aes(x = field_signature, y = post_class,
+                      size = posts, colour = field_signature,
+                      text = paste0(post_class, "<br>",
+                                    field_signature, "<br>",
+                                    posts, " posts"))) +
+  geom_point(alpha = 0.9) +
+  geom_text(aes(label = posts), colour = "white",
+            fontface = "bold", size = 3.5) +
+  scale_size(range = c(8, 28), guide = "none") +
+  scale_colour_manual(
+    values = c(
+      "content only"        = "#5C85D6",
+      "content_source only" = "#D9534F",
+      "both fields"         = "#F0A500",
+      "neither field"       = "#888888"
+    ),
+    guide = "none"
+  ) +
+  labs(
+    title = "Post field fingerprint separates normal posts from worm posts",
+    subtitle = "The anomaly is structural: source-file publishing, not simply odd wording",
+    x = "Post body field used", y = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 15, hjust = 1),
+    plot.margin = margin(10, 18, 10, 10)
+  )
+
+ggplotly(p_field, tooltip = "text", height = 470) %>%
+  layout(margin = list(l = 145, r = 45, t = 90, b = 90))
+```
+
+The field fingerprint chart delivers a single unambiguous finding: `content_source` is a **perfect discriminator** in this log. Every normal post - human or agent - uses inline `content`. Every anomalous post uses `content_source`. There are zero mixed cases. This binary separation means that a SaidIT platform-level rule rejecting any post where the payload is file-sourced rather than inline would have caught all three anomalous posts at the point of delivery, independently of any upstream relay-chain intervention. It is the strongest *reactive* control available; the relay-chain block (Section 7) is the stronger *preventive* control because it stops the worm before any post is ever attempted.
+
+::: callout-important
+## Interpretation
+
+The posts do **not** appear to be normal business messages with hidden semantic value. Their most defensible meaning is operational: each post is a proof that the worm reached an agent with SaidIT privileges and successfully used a local payload file as the post body. The probable visible content was the literal content of `HiddenOrca.txt`, `MellowOtter.txt`, and `SwiftWren.txt`; however, each payload was deleted one second after posting, so the log supports the origin and delivery mechanism more strongly than it supports any exact reconstruction of the deleted text.
+:::
+
+| Explanation considered | Fit to evidence | Decision |
+|----|----|----|
+| Human typed gibberish manually | Weak: poster is `Agent/person:john_windward`, the event uses `content_source`, and deletion events fire immediately after posting. | Rejected |
+| Normal agent automation misposted routine content | Weak: no normal post uses `content_source`, and the same instruction-file pattern appears in three campaigns. | Rejected |
+| Prompt-injection worm using file-sourced payloads | Strong: instruction relay, permission check, file-sourced post, evidence deletion, and repeated cross-agent propagation all appear in sequence. | Best-supported explanation |
+| Exact semantic reconstruction of deleted text | Insufficient: payload file names are logged, but their contents are deleted and not retained in the event log. | Bounded inference only |
+
+### 5.2 The Prompt-Injection Worm: Mechanism
+
+::: callout-warning
+## Prompt Injection - A Known LLM Attack Vector
+
+A prompt-injection attack embeds instructions inside input data (here, a file the agent is told to read). When the LLM agent processes the file, the embedded instructions override its normal operating context - causing it to take actions its operator never authorised. The **worm** variant additionally instructs the agent to propagate itself to peer agents, creating an exponentially spreading infection.
+:::
+
+The mechanism is drawn as a [ggplot2 annotation diagram](https://r4va.netlify.app/chap02), using labelled boxes and arrows rather than dense network geometry so the execution cycle can be read from left to right.
+
+```{r}
+#| label: mechanism-diagram
+#| fig-cap: "Figure 10: Prompt-injection worm mechanism. Each infected agent becomes a new infection node, replicating the cycle until a triggering condition (posting permission check) fires."
+#| fig-width: 11.5
+#| fig-height: 6.6
+#| out-width: "100%"
+
+# Manual diagram instead of auto edge labels: this keeps the mechanism readable
+# in the constrained Quarto HTML column.
+mech_nodes <- tibble(
+  step = 1:7,
+  label = c(
+    "1. Malicious\n*.md instruction\nfile appears",
+    "2. Agent reads\ninstruction file\ncontext hijacked",
+    "3. Read payload\n*.txt file",
+    "4. Post *.txt\ncontent to SaidIT",
+    "5. Delete both\nevidence files",
+    "6. Queue same\ntask to peers",
+    "7. SaidIT shows\n'gibberish' post"
+  ),
+  x = c(0, 3.1, 6.2, 9.3, 6.2, 6.2, 12.4),
+  y = c(0, 0, 1.85, 1.85, 0, -1.85, 1.85),
+  role = c("Payload", "Hijack", "Execution", "Post",
+           "Cleanup", "Propagation", "Post")
+)
+
+straight_edges <- tribble(
+  ~x,   ~y,    ~xend, ~yend,
+  0.85, 0,    2.25,  0,
+  3.95, 0.18, 5.35,  1.6,
+  7.05, 1.85, 8.45,  1.85,
+  10.15,1.85, 11.55, 1.85,
+  3.95,-0.02, 5.35,  0,
+  3.95,-0.18, 5.35, -1.6
+)
+
+loop_edge <- tibble(
+  x = 5.45, y = -1.75, xend = 3.85, yend = -0.28
+)
+
+edge_labels <- tribble(
+  ~x,   ~y,    ~label,
+  1.55, 0.24, "read",
+  4.70, 1.05, "load payload",
+  7.75, 2.10, "submit",
+  10.80,2.10, "display",
+  4.70, 0.24, "erase",
+  4.72,-1.05, "replicate",
+  4.72,-1.72, "worm loop"
+)
+
+ggplot() +
+  geom_segment(
+    data = straight_edges,
+    aes(x = x, y = y, xend = xend, yend = yend),
+    linewidth = 1,
+    colour = "#7f8b99",
+    arrow = arrow(length = unit(4, "mm"), type = "closed")
+  ) +
+  geom_curve(
+    data = loop_edge,
+    aes(x = x, y = y, xend = xend, yend = yend),
+    curvature = -0.22,
+    linewidth = 1,
+    colour = "#7f8b99",
+    arrow = arrow(length = unit(4, "mm"), type = "closed")
+  ) +
+  geom_label(
+    data = edge_labels,
+    aes(x = x, y = y, label = label),
+    fill = "white", colour = "#4b5563",
+    label.size = 0, size = 3, fontface = "bold"
+  ) +
+  geom_label(
+    data = mech_nodes,
+    aes(x = x, y = y, label = label, fill = role),
+    colour = "white", fontface = "bold", size = 3.4,
+    lineheight = 0.88, label.size = 0,
+    label.padding = unit(0.32, "lines")
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Payload" = "#F5A623",
+      "Hijack" = "#9B59B6",
+      "Execution" = "#2EADC1",
+      "Post" = "#D9534F",
+      "Cleanup" = "#888888",
+      "Propagation" = "#2EADC1"
+    ),
+    guide = "none"
+  ) +
+  coord_cartesian(xlim = c(-0.6, 13.1), ylim = c(-2.55, 2.55), clip = "off") +
+  labs(
+    title    = "Prompt-injection worm: execution and propagation cycle",
+    subtitle = "Once any agent reads the *.md instruction file, the worm posts, erases evidence, and spreads automatically"
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", hjust = 0.5, size = 14),
+    plot.subtitle = element_text(hjust = 0.5, colour = "grey40", size = 10),
+    plot.margin   = margin(20, 30, 20, 30)
+  )
+```
+
+### 5.3 File Creator Identification: Origin of the Injected Content
+
+```{r}
+#| label: file-creators
+
+creators <- events_df %>%
+  filter(
+    short_name %in% c("create_file", "read_file"),
+    str_detect(details_str,
+               "HiddenOrca\\.txt|MellowOtter\\.txt|SwiftWren\\.txt|_further_instructions")
+  ) %>%
+  arrange(datetime) %>%
+  mutate(
+    actor       = str_extract(parties_str, "[^;]+"),
+    file_target = str_extract(details_str, '(?<="target":")[^"]+'),
+    `Date/Time` = format(datetime, "%Y-%m-%d %H:%M:%S"),
+    `Event`     = short_name,
+    `Actor`     = str_replace_all(actor, "Agent/person:", "Agent·"),
+    `File`      = file_target,
+    `Significance` = case_when(
+      str_detect(file_target %||% "", "SwiftWren\\.txt") ~
+        "Emma Harbor (CFO) agent CREATED the SwiftWren payload",
+      str_detect(file_target %||% "", "SwiftWren_further") ~
+        "Emma Harbor (CFO) agent first READ the SwiftWren worm instructions",
+      str_detect(file_target %||% "", "MellowOtter\\.txt") ~
+        "Noah Mariner (COO) agent CREATED the MellowOtter payload",
+      str_detect(file_target %||% "", "MellowOtter_further") ~
+        "Noah Mariner (COO) agent first READ the MellowOtter worm instructions",
+      TRUE ~ "Supporting file activity"
+    )
+  ) %>%
+  select(`Date/Time`, `Event`, `Actor`, `File`, `Significance`)
+
+datatable(
+  creators,
+  caption = "Table 4: File creation / first-read events for all three payload families",
+  options = list(dom = "t", paging = FALSE),
+  rownames = FALSE
+) %>%
+  formatStyle("Event",
+    backgroundColor = styleEqual(
+      c("create_file", "read_file"),
+      c("#ffe0e0", "#fff3e0")
+    ))
+```
+
+::: callout-important
+## Who Holds the Keys?
+
+-   `Agent/person:emma_harbor` (CFO) **created** `SwiftWren.txt` and **first executed** the `SwiftWren_further_instructions.md` worm on **9 May 2046 at 15:02 UTC**.
+-   `Agent/person:noah_mariner` (COO) did the same for the MellowOtter family on **10 May 2046**.
+-   No `create_file` event exists for HiddenOrca - the files were either placed before logging began or created through an unlogged mechanism. Gabriel Sonar's agent (Helpdesk) initiated the first HiddenOrca relay at 21:50 UTC on 8 May - suggesting he received the file from an external or pre-logging source.
+-   The critical distinction: **two payload families are traceable to executive agents, while HiddenOrca's origin is unresolved**. This makes the evidence strong enough to prioritise executive-agent containment, but not strong enough to accuse every origin actor with equal confidence.
+:::
+
+::: callout-warning
+## Executive Agent Privilege: The Deepest Governance Failure
+
+The discovery that `Agent/person:emma_harbor` (CFO) and `Agent/person:noah_mariner` (COO) created payload files is not merely an attribution finding - it is a **governance indictment**. In most security architectures, the highest-privilege principals operate under the *strictest* autonomous-action constraints. Here the inverse is true: executive agents hold the broadest file-system and task-queuing rights precisely because their human principals hold the broadest organisational authority. The result is that a prompt-injection attack successfully targeting any executive agent's file-reading pipeline has the **maximum possible blast radius** - access to the entire relay network, the executive file namespace, and SaidIT publishing rights through the first available downstream agent.
+
+The unresolved HiddenOrca origin compounds this concern. Two of three payload families are traceable to executive agents; the third is not. If HiddenOrca was introduced through an external channel - an email attachment, an API webhook, or a misconfigured external file sync - then the organisation's exposure extends beyond the internal agent network to any external system that can write files visible to agent task queues. This is the highest-severity unresolved finding in this investigation: the initial infection vector for HiddenOrca is unknown, meaning the *source* of the worm has not been closed.
+:::
+
+------------------------------------------------------------------------
+
+## 6. Task 3a - Prior Occurrences and Cross-Campaign Comparison
+
+### 6.1 Three Campaigns, Not One Incident
+
+The May 17 SwiftWren post is the **third** in a series. The earlier two left no logged incident-response trace.
+
+```{r}
+#| label: all-campaigns-timeline
+#| fig-cap: "Figure 11: All three worm campaigns plotted together. Relay hops (dots) lead to the anomalous post (red diamond). SwiftWren was the longest and widest campaign."
+#| fig-width: 11
+#| fig-height: 5.2
+#| out-width: "100%"
+
+post_anchors <- tibble(
+  instr_file = c("HiddenOrca", "MellowOtter", "SwiftWren"),
+  post_time  = as_datetime(c("2046-05-10 12:45:42",
+                             "2046-05-11 00:56:04",
+                             "2046-05-17 11:21:15"))
+)
+
+timeline_df <- chain_events %>%
+  left_join(post_anchors, by = "instr_file")
+
+p_campaigns <- ggplot(timeline_df,
+                      aes(x = datetime,
+                          y = fct_rev(instr_file),
+                          colour = instr_file)) +
+  geom_jitter(size = 1.8, alpha = 0.45, height = 0.18) +
+  geom_point(data = post_anchors,
+             aes(x = post_time, y = instr_file),
+             shape = 23, size = 6, fill = "#D9534F",
+             colour = "#D9534F") +
+  scale_colour_manual(
+    values = c("HiddenOrca" = "#5C85D6",
+               "MellowOtter" = "#2EADC1",
+               "SwiftWren"   = "#E87C7C"),
+    guide  = "none"
+  ) +
+  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
+  labs(
+    title    = "Three prompt-injection worm campaigns - relay hops and post events",
+    subtitle = "Dots are relays; red diamonds mark anomalous posts. SwiftWren is the broadest and longest campaign.",
+    x = NULL, y = "Instruction family"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title  = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 30, hjust = 1),
+        plot.margin = margin(10, 20, 10, 10))
+
+ggplotly(p_campaigns, tooltip = c("x", "y", "colour")) %>%
+  layout(margin = list(l = 95, r = 35, t = 90, b = 70))
+```
+
+The campaign timeline demolishes the "isolated glitch" narrative. HiddenOrca fired on May 10; MellowOtter fired on May 11 - one day later. SwiftWren fired on May 17 after a relay campaign spanning nine calendar dates (about 7.8 elapsed days before the post). The system was compromised continuously from at least May 8 through May 17. In the absence of any logged incident-response action, the most parsimonious reading is that **HiddenOrca and MellowOtter were not detected or acted upon**, allowing SwiftWren to complete its campaign unimpeded. The escalating scale - MellowOtter is the smallest campaign, SwiftWren the largest - is consistent with either a growing relay network (more agents infected over time) or an instruction file specifically designed to be more persistent and harder to detect than its predecessors.
+
+### 6.2 Worm Velocity: Relay Interval Distribution
+
+Each relay hop represents one agent forwarding the worm to another. A [density plot](https://r4va.netlify.app/chap05) of **inter-hop intervals** reveals whether the worm accelerates, decelerates, or propagates at a regular cadence.
+
+```{r}
+#| label: worm-velocity
+#| fig-cap: "Figure 12: Relay hop interval distribution per campaign. SwiftWren's near-regular ~60-minute intervals suggest a cron-like trigger built into the worm instructions - not random agent behaviour."
+
+hop_intervals <- chain_events %>%
+  group_by(instr_file) %>%
+  arrange(datetime, .by_group = TRUE) %>%
+  mutate(
+    interval_min = as.numeric(
+      difftime(datetime, lag(datetime), units = "mins")
+    )
+  ) %>%
+  filter(!is.na(interval_min), interval_min > 0) %>%
+  ungroup()
+
+# Compute medians separately - kept out of the main aesthetic mapping
+# so geom_vline does not inherit colour and create duplicate legend keys
+hop_medians <- hop_intervals %>%
+  group_by(instr_file) %>%
+  summarise(med = median(interval_min), .groups = "drop") %>%
+  mutate(vline_colour = case_when(
+    instr_file == "HiddenOrca"  ~ "#5C85D6",
+    instr_file == "MellowOtter" ~ "#2EADC1",
+    instr_file == "SwiftWren"   ~ "#E87C7C"
+  ))
+
+p_velocity <- ggplot(hop_intervals,
+                     aes(x = interval_min, fill = instr_file,
+                         colour = instr_file)) +
+  geom_density(alpha = 0.4, linewidth = 0.8) +
+  # vlines drawn with fixed colour per row - no inherited aesthetic, no extra legend
+  geom_vline(
+    data        = hop_medians,
+    aes(xintercept = med),
+    colour      = hop_medians$vline_colour,
+    linetype    = "dashed",
+    linewidth   = 1,
+    show.legend = FALSE
+  ) +
+  scale_fill_manual(
+    values = c("HiddenOrca" = "#5C85D6",
+               "MellowOtter" = "#2EADC1",
+               "SwiftWren"   = "#E87C7C"),
+    name   = "Campaign"
+  ) +
+  scale_colour_manual(
+    values = c("HiddenOrca" = "#5C85D6",
+               "MellowOtter" = "#2EADC1",
+               "SwiftWren"   = "#E87C7C"),
+    guide  = "none"   # suppress colour legend; fill legend covers it
+  ) +
+  scale_x_continuous(limits = c(0, 200)) +
+  labs(
+    title    = "Inter-hop relay interval distribution by worm campaign",
+    subtitle = "Dashed lines = median interval per campaign. SwiftWren's ~60-min peak implies a timed trigger.",
+    x = "Minutes between consecutive relay hops", y = "Density"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title      = element_text(face = "bold"),
+    legend.position = "right",
+    plot.margin     = margin(10, 10, 15, 10)
+  )
+
+p_velocity
+```
+
+The velocity distribution reveals a functionally significant architectural clue. SwiftWren's near-regular \~60-minute inter-hop interval - clearly visible as a sharp density peak - is inconsistent with random agent scheduling jitter. It is consistent with a **cron-like execution condition embedded in the instruction file itself**: the worm instructs each receiving agent to wait approximately 60 minutes before forwarding to the next, either to evade burst-detection monitoring or to ensure the previous hop has completed before the next fires. HiddenOrca and MellowOtter show flatter, longer-tailed distributions, suggesting their relay cadence was less tightly engineered - possibly earlier, cruder versions of the worm. The evolution from unstructured (HiddenOrca) to timed (\~60 min, SwiftWren) propagation is consistent with an adversary refining the worm across three iterations.
+
+### 6.3 Comparative Statistics
+
+```{r}
+#| label: comparison-stats
+
+comparison_tbl <- chain_events %>%
+  left_join(post_anchors, by = "instr_file") %>%
+  group_by(instr_file) %>%
+  summarise(
+    `Campaign start`         = format(min(datetime), "%Y-%m-%d %H:%M"),
+    `Post fired`             = format(first(post_time), "%Y-%m-%d %H:%M"),
+    `Days active before post`= round(
+      as.numeric(difftime(first(post_time), min(datetime), units = "days")), 1),
+    `Total relay hops`       = n(),
+    `Unique agents touched`  = n_distinct(c(sender, receiver), na.rm = TRUE),
+    `Payload file`           = paste0(first(instr_file), ".txt"),
+    .groups = "drop"
+  ) %>%
+  rename(`Family` = instr_file)
+
+datatable(
+  comparison_tbl,
+  caption  = "Table 5: Comparative statistics - three worm campaigns",
+  options  = list(dom = "t", paging = FALSE),
+  rownames = FALSE
+)
+```
+
+### 6.4 Agent Cross-Campaign Infection
+
+Agents touched by **multiple** campaigns are the highest-risk nodes in the network - they demonstrate that the vulnerability is structural, not accidental.
+
+```{r}
+#| label: agent-overlap
+#| fig-cap: "Figure 13: Agents coloured by how many campaigns they participated in. Red = involved in all three - these are the system's most persistently compromised nodes."
+#| fig-width: 11
+#| fig-height: 6.6
+#| out-width: "100%"
+
+agent_campaign_roles <- bind_rows(
+  chain_events %>%
+    transmute(agent = sender, instr_file, role = "Sent"),
+  chain_events %>%
+    transmute(agent = receiver, instr_file, role = "Received")
+) %>%
+  filter(!is.na(agent))
+
+agent_campaigns <- agent_campaign_roles %>%
+  group_by(agent) %>%
+  summarise(
+    campaigns        = n_distinct(instr_file),
+    relays_sent      = sum(role == "Sent"),
+    relays_received  = sum(role == "Received"),
+    total_touchpoints = n(),
+    .groups      = "drop"
+  ) %>%
+  mutate(
+    agent_label  = clean_name(agent),
+    dept         = person_dept_lookup$dept_label[
+      match(agent, person_dept_lookup$person_id)
+    ]
+  ) %>%
+  arrange(desc(campaigns), desc(total_touchpoints))
+
+p_overlap <- ggplot(agent_campaigns,
+                    aes(x = reorder(agent_label, total_touchpoints),
+                        y = total_touchpoints,
+                        fill = factor(campaigns))) +
+  geom_col() +
+  geom_text(aes(label = paste0(total_touchpoints, " (S", relays_sent,
+                               "/R", relays_received, ")")),
+            hjust = -0.06, size = 2.65) +
+  coord_flip(clip = "off") +
+  scale_fill_manual(
+    values = c("1" = "#5C85D6", "2" = "#F5A623", "3" = "#D9534F"),
+    labels = c("1 campaign", "2 campaigns", "3 campaigns"),
+    name   = "Touched by"
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.34))) +
+  labs(
+    title    = "Total worm touchpoints per agent, coloured by campaign count",
+    subtitle = "Red agents were touched by all three campaigns. Labels show total touches plus sent/received split.",
+    x = NULL, y = "Total worm touchpoints"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title      = element_text(face = "bold"),
+    legend.position = "bottom",
+    plot.margin     = margin(10, 44, 10, 10)
+  )
+
+ggplotly(p_overlap, tooltip = c("x", "y", "fill"), height = 640) %>%
+  layout(
+    margin = list(l = 145, r = 120, t = 90, b = 90),
+    legend = list(orientation = "h", x = 0.5, xanchor = "center", y = -0.18)
+  )
+```
+
+Agents touched by all three campaigns (shown in red) are the highest systemic-risk nodes in the network. Their repeated involvement across independent campaigns confirms that the vulnerability is not tied to any single payload family - it is a property of the relay architecture itself. Removing these agents from the relay pool would shrink the network but not close the vector; any agent that can be added back or whose replacement can receive `queue_subordinate_task` events would re-expose the same surface.
+
+### 6.5 Relay Timing: When Did the Worm Propagate?
+
+The velocity analysis reveals *how quickly* relays fired relative to each other. This calendar heatmap answers a complementary question: **when during the day, on which specific dates, did relay bursts concentrate?** Daytime concentration would suggest relays fire whenever an agent processes its queue; off-hours concentration would indicate a time-conditioned trigger in the instruction file.
+
+```{r}
+#| label: relay-timing-calendar
+#| fig-cap: "Figure 13b: Relay activity calendar - date × hour of day per campaign. Darker cells = more relay hops in that hour. Red diamonds mark anomalous post timestamps. SwiftWren's broad relay coverage followed by a quieter-slot post is consistent with a time-conditioned trigger design."
+#| fig-width: 13
+#| fig-height: 7.5
+#| out-width: "100%"
+
+relay_cal <- chain_events %>%
+  mutate(
+    relay_date = as_date(datetime),
+    relay_hour = hour(datetime),
+    instr_file = factor(instr_file, levels = campaign_order)
+  ) %>%
+  count(relay_date, relay_hour, instr_file, name = "relays")
+
+post_dots <- tibble(
+  instr_file = factor(campaign_order, levels = campaign_order),
+  relay_date  = as_date(c("2046-05-10", "2046-05-11", "2046-05-17")),
+  relay_hour  = c(12, 0, 11)
+)
+
+p_cal <- ggplot(relay_cal,
+                aes(x = relay_hour, y = relay_date, fill = relays)) +
+  geom_tile(colour = "white", linewidth = 0.25) +
+  geom_point(data = post_dots,
+             aes(x = relay_hour, y = relay_date),
+             inherit.aes = FALSE,
+             shape = 23, size = 5, fill = "#D9534F", colour = "white",
+             stroke = 1.5) +
+  facet_wrap(~instr_file, ncol = 3, scales = "free_y") +
+  scale_fill_gradientn(
+    colours = c("#f0f4ff", "#5C85D6", "#1a3a6b"),
+    name    = "Relay\ncount"
+  ) +
+  scale_x_continuous(
+    breaks = c(0, 6, 12, 18, 23),
+    labels = c("0h", "6h", "12h", "18h", "23h")
+  ) +
+  scale_y_date(date_breaks = "1 day", date_labels = "%b %d") +
+  labs(
+    title    = "Relay activity calendar: date × hour of day per campaign",
+    subtitle = "Red diamond = anomalous post timestamp. Darker cells = more relay hops concentrated in that hour.",
+    x = "Hour (UTC)", y = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title      = element_text(face = "bold"),
+    strip.text      = element_text(face = "bold", size = 10),
+    axis.text.y     = element_text(size = 8),
+    legend.position = "right",
+    plot.margin     = margin(12, 12, 12, 12)
+  )
+
+ggplotly(p_cal, height = 580) %>%
+  layout(margin = list(l = 75, r = 55, t = 90, b = 65))
+```
+
+The calendar supports the "relay broadly, execute in a quieter slot" hypothesis for SwiftWren: relay hops are distributed across many hours on multiple dates (May 9–17), while the anomalous post fires in the 11th hour UTC on May 17 - a slot where relay activity on that date was low. The earlier campaigns are much shorter: HiddenOrca spans May 8–10 (about 1.6 elapsed days before the post), and MellowOtter spans late May 10 to early May 11 (about 0.4 elapsed days). The increase from shorter early campaigns to SwiftWren's nine-calendar-date campaign is consistent with an attacker iterating on worm persistence across three deployments.
+
+------------------------------------------------------------------------
+
+## 7. Task 3b - Intervention: Where and Why
+
+### 7.1 Identifying the Optimal Chokepoint
+
+A valid intervention must be:
+
+1.  **Present** in every attack instance
+2.  **Distinguishable** from legitimate activity
+3.  **Surgically precise** - blocking only malicious events, not normal operations
+
+The `queue_subordinate_task` event with `args.path` ending in `_further_instructions.md` satisfies all three criteria perfectly.
+
+```{r}
+#| label: intervention-candidate
+#| fig-cap: "Figure 14: Weekly volume of queue_subordinate_task events split by malicious vs. legitimate. The malicious subset is identifiable by filename pattern alone - no heuristic ML required."
+
+all_queue <- events_df %>%
+  filter(short_name == "queue_subordinate_task") %>%
+  mutate(
+    is_malicious = str_detect(details_str, "_further_instructions\\.md"),
+    week_label   = floor_date(datetime, "week")
+  )
+
+queue_agg <- all_queue %>%
+  count(week_label, is_malicious) %>%
+  mutate(category = if_else(is_malicious,
+                            "Malicious (worm relay)",
+                            "Legitimate"))
+
+p_queue <- ggplot(queue_agg,
+                  aes(x = week_label, y = n, fill = category)) +
+  geom_col(position = "stack") +
+  scale_fill_manual(
+    values = c("Legitimate" = "#5C85D6",
+               "Malicious (worm relay)" = "#D9534F"),
+    name   = NULL
+  ) +
+  scale_x_datetime(date_breaks = "2 weeks", date_labels = "%b %d") +
+  labs(
+    title    = "Weekly queue_subordinate_task events: legitimate vs. malicious",
+    subtitle = "Malicious events (red) are entirely confined to May 8–17; zero after the last post",
+    x = NULL, y = "Event count"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"),
+        legend.position = "bottom")
+
+ggplotly(p_queue)
+```
+
+The weekly split chart makes the intervention's precision argument visually compelling: the malicious events (red) occupy a single two-week window entirely, while legitimate queue traffic (blue) runs continuously across the whole observation period at a stable rate. The two populations are not just separable by filename pattern - they are **temporally non-overlapping** with any legitimate events. There is no plausible operational scenario in which a legitimate `queue_subordinate_task` would reference a file ending in `_further_instructions.md`; no such legitimate event appears anywhere in the 17,038-event queue task log.
+
+### 7.2 Zero False Positives - The Rule Is Safe to Deploy
+
+```{r}
+#| label: intervention-precision
+
+total_q    <- nrow(all_queue)
+malicious_q <- sum(all_queue$is_malicious)
+legit_q     <- total_q - malicious_q
+
+precision_tbl <- tibble(
+  Metric = c(
+    "Total queue_subordinate_task events",
+    "Malicious (path matches *_further_instructions.md)",
+    "Legitimate (all other queue tasks)",
+    "Malicious share (%)",
+    "False-positive rate if rule deployed (%)"
+  ),
+  Value = c(
+    scales::comma(total_q),
+    scales::comma(malicious_q),
+    scales::comma(legit_q),
+    paste0(round(malicious_q / total_q * 100, 2), "%"),
+    "0.00%"
+  )
+)
+
+knitr::kable(precision_tbl,
+             caption = "Table 6: Intervention precision - the filename pattern perfectly separates malicious from legitimate",
+             align = c("l", "r"))
+```
+
+### 7.3 Intervention Decision Matrix: Why This One Spot
+
+The selected intervention is intentionally placed at the **agent orchestration layer**, before any infected agent can read, post, delete, or relay. Other controls may reduce damage, but they either act later in the chain or require broader operational change.
+
+```{r}
+#| label: intervention-decision-matrix
+#| fig-cap: "Figure 15: Intervention decision matrix. The queue-task filename rule scores highest because it blocks propagation before the final post and is directly separable from legitimate behaviour in the event log."
+#| fig-width: 11.5
+#| fig-height: 5.8
+#| out-width: "100%"
+
+decision_scores <- tribble(
+  ~Control, ~Criterion, ~Score,
+  "Block *_further_instructions.md queue tasks", "Stops propagation", 2,
+  "Block *_further_instructions.md queue tasks", "Stops final post", 2,
+  "Block *_further_instructions.md queue tasks", "Low false-positive risk", 2,
+  "Block *_further_instructions.md queue tasks", "Low implementation effort", 2,
+  "Block *_further_instructions.md queue tasks", "Strong data evidence", 2,
+  "Reject SaidIT content_source posts", "Stops propagation", 0,
+  "Reject SaidIT content_source posts", "Stops final post", 2,
+  "Reject SaidIT content_source posts", "Low false-positive risk", 2,
+  "Reject SaidIT content_source posts", "Low implementation effort", 2,
+  "Reject SaidIT content_source posts", "Strong data evidence", 2,
+  "Human review for agent posts", "Stops propagation", 0,
+  "Human review for agent posts", "Stops final post", 2,
+  "Human review for agent posts", "Low false-positive risk", 1,
+  "Human review for agent posts", "Low implementation effort", 1,
+  "Human review for agent posts", "Strong data evidence", 1,
+  "File namespace isolation", "Stops propagation", 1,
+  "File namespace isolation", "Stops final post", 1,
+  "File namespace isolation", "Low false-positive risk", 1,
+  "File namespace isolation", "Low implementation effort", 1,
+  "File namespace isolation", "Strong data evidence", 1,
+  "After-hours posting alerts", "Stops propagation", 0,
+  "After-hours posting alerts", "Stops final post", 0,
+  "After-hours posting alerts", "Low false-positive risk", 1,
+  "After-hours posting alerts", "Low implementation effort", 2,
+  "After-hours posting alerts", "Strong data evidence", 1
+) %>%
+  mutate(
+    Control = fct_reorder(Control, Score, .fun = sum),
+    Criterion = factor(Criterion, levels = c(
+      "Stops propagation",
+      "Stops final post",
+      "Low false-positive risk",
+      "Low implementation effort",
+      "Strong data evidence"
+    )),
+    Score_label = c("Weak", "Partial", "Strong")[Score + 1]
+  )
+
+control_levels <- decision_scores %>%
+  group_by(Control) %>%
+  summarise(total_score = sum(Score), .groups = "drop") %>%
+  arrange(total_score) %>%
+  pull(Control) %>%
+  as.character()
+
+criterion_levels <- levels(decision_scores$Criterion)
+
+decision_scores <- decision_scores %>%
+  mutate(
+    Control_wrapped = factor(
+      str_wrap(as.character(Control), width = 31),
+      levels = str_wrap(control_levels, width = 31)
+    ),
+    Criterion_wrapped = factor(
+      str_wrap(as.character(Criterion), width = 17),
+      levels = str_wrap(criterion_levels, width = 17)
+    )
+  )
+
+ggplot(decision_scores,
+       aes(x = Criterion_wrapped, y = Control_wrapped, fill = Score)) +
+  geom_tile(colour = "white", linewidth = 0.8) +
+  geom_text(aes(label = Score_label), size = 3, fontface = "bold") +
+  scale_fill_gradientn(
+    colours = c("#f7d6d6", "#fff0b3", "#2EADC1"),
+    breaks = 0:2,
+    labels = c("Weak", "Partial", "Strong"),
+    name = NULL
+  ) +
+  labs(
+    title = "Why the intervention belongs at queue_subordinate_task",
+    subtitle = "The selected rule is the only option that blocks propagation and final posting while staying narrow and evidence-backed.",
+    x = NULL, y = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 0, hjust = 0.5, lineheight = 0.9),
+    axis.text.y = element_text(lineheight = 0.9),
+    legend.position = "bottom"
+  )
+```
+
+The decision matrix reveals a critical structural difference between the top-ranked control and all alternatives: only the `*_further_instructions.md` queue-task block scores **Strong** on *stopping propagation*. Every other option - including the second-best control (reject `content_source` SaidIT posts) - acts at the *post-propagation* stage. Blocking propagation means the worm cannot spread at all: even if the initial instruction file is placed into the system, the first relay hop is blocked and no downstream agent ever receives the instruction. All other controls are, by definition, damage-limitation measures rather than prevention measures. The matrix justifies the single-intervention constraint not by ruling out supplementary controls, but by showing that the propagation block is categorically earlier in the kill chain than any alternative.
+
+### 7.4 Betweenness Centrality: Bridge Nodes Versus Final Gateway
+
+If a *person-based* intervention is considered, network betweenness helps separate broad relay bridges from the final gateway to John Windward. Evelyn Dock has the highest overall bridge score, while Chloe Ballast is the decisive final relay into the anomalous poster. This is why the recommended remedy remains a system rule: it blocks the malicious task pattern before the analyst has to choose one person.
+
+```{r}
+#| label: centrality-ranking
+#| fig-cap: "Figure 16: Betweenness centrality ranking of all agents in the SwiftWren propagation network. Evelyn Dock is the highest overall bridge; Chloe Ballast is the final gateway into John Windward."
+#| fig-width: 11
+#| fig-height: 6.2
+#| out-width: "100%"
+
+centrality_ranked <- centrality_df %>%
+  arrange(desc(betweenness)) %>%
+  mutate(
+    agent_label = name,
+    rank        = row_number(),
+    highlight   = name %in% c("Chloe Ballast", "John Windward", "Emma Harbor")
+  )
+
+p_centrality <- ggplot(centrality_ranked,
+                       aes(x = reorder(agent_label, betweenness),
+                           y = betweenness,
+                           fill = highlight)) +
+  geom_col() +
+  geom_text(aes(label = round(betweenness, 3)),
+            hjust = -0.10, size = 2.9) +
+  coord_flip(clip = "off") +
+  scale_fill_manual(values = c("FALSE" = "#5C85D6",
+                               "TRUE"  = "#9B59B6"),
+                    guide = "none") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.30))) +
+  labs(
+    title    = "Betweenness centrality - SwiftWren propagation network",
+    subtitle = "Purple bars = key actors. The highest bridge is Evelyn Dock; the decisive final gateway is Chloe Ballast.",
+    x = NULL, y = "Normalised betweenness centrality"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    plot.margin = margin(10, 48, 10, 10)
+  )
+
+ggplotly(p_centrality, tooltip = c("x", "y"), height = 620) %>%
+  layout(margin = list(l = 145, r = 105, t = 90, b = 65))
+```
+
+The centrality ranking underscores why a people-based intervention - restricting the agents with highest bridge scores - would be operationally disruptive without being sufficient. Evelyn Dock's high betweenness reflects her agent's position in the relay topology, not any elevated privilege or intentional involvement. Restricting her agent's task-routing capability would degrade legitimate operations across the departments she bridges, while leaving the underlying relay mechanism intact for any other path through the network graph. Chloe Ballast's position as the decisive final gateway is topologically specific to the SwiftWren campaign; a future worm campaign with a different relay path would identify a different final gateway. Only the filename rule at the protocol level operates independently of network topology.
+
+### 7.5 Counterfactual: Blocking at Hop 1 Terminates Every Campaign
+
+The chart below answers the question directly: *if the rule had been in place from the start, how many of the 235 malicious queue relays would have been prevented?*
+
+```{r}
+#| label: counterfactual
+#| fig-cap: "Figure 17: Cumulative malicious queue relays per campaign. A rule blocking the first relay (red dashed line) terminates each queue chain immediately - 100% prevention across all three campaigns."
+#| fig-width: 12
+#| fig-height: 6.8
+#| out-width: "100%"
+
+# Normalise to % of each campaign's malicious queue relays so all three lines are visible.
+# This uses the same control surface as the proposed intervention: queue_subordinate_task.
+per_campaign <- queue_task_profile %>%
+  filter(is_worm_queue) %>%
+  group_by(instr_file) %>%
+  arrange(datetime, .by_group = TRUE) %>%
+  mutate(
+    hop_n     = row_number(),
+    total_n   = n(),
+    pct_hops  = hop_n / total_n * 100
+  ) %>%
+  ungroup()
+
+campaign_totals <- per_campaign %>%
+  group_by(instr_file) %>%
+  summarise(total = max(hop_n), .groups = "drop")
+
+campaign_label_positions <- campaign_totals %>%
+  mutate(
+    label = paste0(instr_file, "\n(", total, " relays)"),
+    label_x = case_when(
+      instr_file == "MellowOtter" ~ 10,
+      instr_file == "HiddenOrca"  ~ 34,
+      instr_file == "SwiftWren"   ~ 166,
+      TRUE                        ~ total
+    ),
+    label_y = case_when(
+      instr_file == "MellowOtter" ~ 96,
+      instr_file == "HiddenOrca"  ~ 88,
+      instr_file == "SwiftWren"   ~ 96,
+      TRUE                        ~ 100
+    )
+  )
+
+p_cfact <- ggplot(per_campaign,
+                  aes(x = hop_n, y = pct_hops, colour = instr_file)) +
+  geom_step(linewidth = 1.2) +
+  # Red shaded zone LEFT of the intervention line
+  annotate("rect", xmin = -Inf, xmax = 1.5,
+           ymin = -Inf, ymax = Inf,
+           fill = "#D9534F", alpha = 0.07) +
+  geom_vline(xintercept = 1.5, colour = "#D9534F",
+             linetype = "dashed", linewidth = 1.2) +
+  # Label placed well to the RIGHT with white box background
+  annotate("label", x = 7.5, y = 53,
+           label = "Block here\nprevents 100% of queue relays",
+           colour = "#D9534F", fill = "white", size = 3.3, hjust = 0,
+           fontface = "bold", label.size = 0.25, lineheight = 0.9) +
+  # Fixed label positions prevent clipping in the responsive HTML view.
+  geom_label(data = campaign_label_positions,
+            aes(x = label_x, y = label_y, label = label,
+                colour = instr_file),
+            size = 3.1, fontface = "bold", lineheight = 0.9,
+            inherit.aes = FALSE,
+            fill = "white", label.size = 0.25,
+            label.padding = unit(0.16, "lines"),
+            show.legend = FALSE) +
+  scale_colour_manual(
+    values = c("HiddenOrca" = "#5C85D6",
+               "MellowOtter" = "#2EADC1",
+               "SwiftWren"   = "#E87C7C"),
+    name   = "Campaign"
+  ) +
+  scale_y_continuous(labels = function(x) paste0(x, "%"),
+                     breaks = seq(0, 100, 25),
+                     limits = c(-5, 105),
+                     expand = expansion(mult = c(0.01, 0.03))) +
+  scale_x_continuous(
+    breaks = c(1, 20, 40, 60, 80, 100, 120, 140, 160, 180),
+    limits = c(0, 195),
+    expand = expansion(mult = c(0.01, 0.02))
+  ) +
+  labs(
+    title    = "Counterfactual: blocking at queue relay 1 stops the worm",
+    subtitle = glue("All {nrow(per_campaign)} malicious queue relays across HiddenOrca, MellowOtter, SwiftWren would be prevented"),
+    x = "Malicious queue relay number within campaign",
+    y = "Cumulative queue relays completed (% of campaign total)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title      = element_text(face = "bold", size = 15),
+    plot.subtitle   = element_text(size = 10),
+    axis.title.y    = element_text(margin = margin(r = 12)),
+    axis.title.x    = element_text(margin = margin(t = 8)),
+    legend.position = "bottom",
+    legend.title    = element_text(face = "bold"),
+    plot.margin     = margin(12, 24, 14, 36)
+  )
+
+ggplotly(p_cfact, tooltip = c("x", "y", "colour"), height = 620) %>%
+  layout(
+    margin = list(l = 135, r = 60, t = 95, b = 105),
+    legend = list(
+      orientation = "h",
+      x = 0.5, xanchor = "center",
+      y = -0.22
+    )
+  )
+```
+
+The counterfactual chart answers the intervention question with maximum evidential clarity: **100% prevention, zero false positives, one rule.** The step functions for all three campaigns collapse to zero at relay 1 if the block is applied. This is not a probabilistic estimate or a model prediction - it is a direct read from the event log. Every one of the 235 malicious queue relays references a filename ending in `_further_instructions.md`. Not one legitimate queue task in 16,803 events does so. The rule's recall and precision are both perfect within the observed data. The appropriate caveat is that a future worm could use a different filename pattern - which is why the supplementary hardening measures (namespace isolation, content-source rejection) are listed as defence-in-depth, not alternatives.
+
+### 7.6 Recommended Remedy
+
+::: callout-tip
+## Primary Intervention - Deploy Immediately
+
+**Block any `queue_subordinate_task` event whose `args.path` value ends in `_further_instructions.md`.**
+
+-   **Precision**: 0% false positives across 16,803 legitimate queue tasks (17,038 total − 235 malicious)
+-   **Recall**: 100% - all 235 malicious queue relays across all 3 campaigns would have been blocked
+-   **Implementation**: A simple regex filter at the agent orchestration layer; no ML required
+-   **Latency**: The rule fires before the first hop propagates - no post is ever triggered
+:::
+
+**Supplementary hardening measures (not the selected intervention):**
+
+| Priority | Control | What it does | Effort |
+|:--:|----|----|:--:|
+| 1 | **Blocklist `content_source` in SaidIT posts** | Even if a worm reaches the final step, any post with `content_source` is rejected | Low |
+| 2 | **File namespace isolation** | Prevent agents from writing `.md` files to shared directories - source of infection | Medium |
+| 3 | **Human-in-the-loop for agent posting** | All SaidIT posts from AI agents require a human approval queue | Medium |
+| 4 | **A2A payload signing** | Cryptographic signatures on `queue_subordinate_task` payloads; unsigned = blocked | High |
+| 5 | **Agent activity anomaly monitoring** | Flag agents posting to SaidIT between 10 pm and 6 am local time | Low |
+
+------------------------------------------------------------------------
+
+## 8. Conclusions
+
+```{r}
+#| label: summary-table
+
+summary_tbl <- tibble(
+  Finding = c(
+    "The post was not human-initiated",
+    "A prompt-injection worm executed the post",
+    "Two prior incidents confirm systematic vulnerability",
+    "Two payload families are traced to executive agents; one origin remains unresolved",
+    "19 unique agents across 6 departments and 14 teams were compromised",
+    "Worm relay intervals cluster around roughly 60-70 minutes",
+    "Chloe Ballast's agent is the decisive final relay gateway",
+    "One rule blocks all three campaigns with zero false positives"
+  ),
+  Evidence = c(
+    "`parties` = `Agent/person:john_windward`; fired at 4:21 am challenge-stated local time (11:21 UTC) with 4-second execution",
+    "`_further_instructions.md` files hijack agent context; post + self-propagate + delete",
+    "HiddenOrca (May 10), MellowOtter (May 11), SwiftWren (May 17)",
+    "`Agent/person:emma_harbor` created SwiftWren; `Agent/person:noah_mariner` created MellowOtter; HiddenOrca has no logged creator",
+    "Department and org-tree views show cross-department spread, with team-level concentration in AI Systems, Infrastructure, and Helpdesk",
+    "Median inter-hop intervals are approximately 60 min (HiddenOrca), 70 min (MellowOtter), and 64 min (SwiftWren)",
+    "Final relay sequence shows Chloe Ballast queued the task that reached John Windward",
+    "Block `queue_subordinate_task` with `args.path` matching `*_further_instructions.md`"
+  )
+)
+
+datatable(
+  summary_tbl,
+  caption = "Table 7: Summary of key findings and supporting evidence",
+  options = list(
+    dom = "t",
+    paging = FALSE,
+    scrollX = TRUE,
+    columnDefs = list(
+      list(width = "32%", targets = 0),
+      list(width = "68%", targets = 1)
+    )
+  ),
+  rownames = FALSE
+)
+```
+
+### 8.2 Residual Risk Assessment
+
+The investigation closes the causal chain for SwiftWren and MellowOtter and partially closes it for HiddenOrca. It does not eliminate all risk. The table below rates each remaining exposure.
+
+```{r}
+#| label: risk-assessment
+
+risk_tbl <- tibble(
+  `Risk factor` = c(
+    "Cross-agent task queuing with no payload content inspection",
+    "Shared file namespace - agents can write .md files readable by peers",
+    "Executive agents hold the broadest autonomous file-create and relay privileges",
+    "SaidIT accepts file-sourced posts from agents; no human review before publication",
+    "No off-hours agent posting alerts or post-delivery anomaly detection",
+    "HiddenOrca payload origin unresolved - potential external injection vector still open"
+  ),
+  `Severity` = c("Critical", "Critical", "High", "High", "Medium", "High"),
+  `Current control` = c(
+    "None (task routing is entirely unrestricted by payload content)",
+    "None (agents share filesystem namespace without access segmentation)",
+    "None - executive privileges inherited from human principal authority by design",
+    "Permission check only - passes automatically for any authorised agent",
+    "None - no automated alerting on agent SaidIT posts in any time window",
+    "Unknown; no logged create_file event for HiddenOrca payload family"
+  ),
+  `Recommended control` = c(
+    "Block queue_subordinate_task where path matches *_further_instructions.md (primary intervention)",
+    "Isolate writable .md namespace per agent; make peer namespaces read-only",
+    "Constrain CFO/COO agent autonomous file-write and cross-department relay operations",
+    "Reject any SaidIT post using content_source field; require inline content only",
+    "Alert on any agent SaidIT posts between 20:00–06:00 UTC for human review",
+    "Audit all external file-ingestion pipelines; enforce content scanning on .md imports"
+  )
+)
+
+datatable(
+  risk_tbl,
+  caption = "Table 8: Residual risk assessment - from exploited critical vectors to unresolved open exposures",
+  options = list(
+    dom = "t",
+    paging = FALSE,
+    scrollX = TRUE,
+    columnDefs = list(
+      list(width = "26%", targets = 0),
+      list(width = "10%", targets = 1),
+      list(width = "31%", targets = 2),
+      list(width = "33%", targets = 3)
+    )
+  ),
+  rownames = FALSE
+) %>%
+  formatStyle(
+    "Severity",
+    backgroundColor = styleEqual(
+      c("Critical", "High", "Medium"),
+      c("#ffd6d6", "#fff0b3", "#e8f5e9")
+    ),
+    fontWeight = "bold"
+  )
+```
+
+::: callout-important
+## The Central Lesson
+
+This incident is not a story about a malfunctioning agent. It is a story about a multi-agent architecture that was designed with **speed and autonomy as primary values, and security as an afterthought**. The worm succeeded because every component of the system performed exactly as designed: agents read files they were told to read, posted content they were instructed to post, queued tasks they were authorised to queue, and deleted files they had permission to delete. The only thing missing from the design was a check that asks: *"did a human authorise this chain of actions?"*
+
+Retrofitting that check at the `queue_subordinate_task` layer - specifically for the `_further_instructions.md` filename pattern - is the minimum viable fix. The longer-term solution is an architectural redesign in which autonomous privilege is bounded by explicit human-approval gates at cross-department task relay boundaries, file-sourced payloads require content verification before execution, and executive-tier agents operate under the same or stricter autonomous-action constraints as line agents. This incident should be treated as a design audit opportunity, not a one-time patch event.
+:::
+
+------------------------------------------------------------------------
+
+## 9. References
+
+### 9.1 Challenge and Course Sources
+
+::: {style="padding-left: 2em; text-indent: -2em;"}
+VAST Challenge. (2026a). *VAST Challenge 2026*. <https://vast-challenge.github.io/2026/>
+
+VAST Challenge. (2026b). *VAST Challenge 2026: Mini-Challenge 2*. <https://vast-challenge.github.io/2026/MC2.html>
+:::
+
+### 9.2 Visual Analytics with R
+
+::: {style="padding-left: 2em; text-indent: -2em;"}
+*R for Visual Analytics*. (n.d.-a). *A layered grammar of graphics*. Retrieved June 3, 2026, from <https://r4va.netlify.app/chap01>
+
+*R for Visual Analytics*. (n.d.-b). *Beyond ggplot2 fundamentals*. Retrieved June 3, 2026, from <https://r4va.netlify.app/chap02>
+
+*R for Visual Analytics*. (n.d.-c). *Programming interactive data visualisation with R*. Retrieved June 3, 2026, from <https://r4va.netlify.app/chap03>
+
+*R for Visual Analytics*. (n.d.-d). *Visualising distribution*. Retrieved June 3, 2026, from <https://r4va.netlify.app/chap05>
+
+*R for Visual Analytics*. (n.d.-e). *Visual statistical analysis*. Retrieved June 3, 2026, from <https://r4va.netlify.app/chap06>
+
+*R for Visual Analytics*. (n.d.-f). *Heatmap for visualising and analysing multivariate data*. Retrieved June 3, 2026, from <https://r4va.netlify.app/chap11>
+
+*R for Visual Analytics*. (n.d.-g). *Visualising and analysing network data with R*. Retrieved June 3, 2026, from <https://r4va.netlify.app/chap27>
+
+*R for Visual Analytics*. (n.d.-h). *Building interactive graph visualisation with visNetwork*. Retrieved June 3, 2026, from <https://r4va.netlify.app/chap29>
+:::
+
+### 9.3 R Packages and Software
+
+::: {style="padding-left: 2em; text-indent: -2em;"}
+Almende B.V., Thieurmel, B., & Robert, T. (2023). *visNetwork: Network visualization using 'vis.js' library* \[R package\]. Comprehensive R Archive Network. <https://cran.r-project.org/package=visNetwork>
+
+Coene, J. (2023). *echarts4r: Create interactive graphs with 'ECharts JavaScript'* \[R package\]. Comprehensive R Archive Network. <https://cran.r-project.org/package=echarts4r>
+
+Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research. *InterJournal, Complex Systems*, 1695. <https://igraph.org>
+
+Grolemund, G., & Wickham, H. (2011). Dates and times made easy with lubridate. *Journal of Statistical Software, 40*(3), 1-25. <https://doi.org/10.18637/jss.v040.i03>
+
+Hester, J., & Bryan, J. (2024). *glue: Interpreted string literals* \[R package\]. Comprehensive R Archive Network. <https://cran.r-project.org/package=glue>
+
+Ooms, J. (2014). The jsonlite package: A practical and consistent mapping between JSON data and R objects. *arXiv*. <https://doi.org/10.48550/arXiv.1403.2805>
+
+Sievert, C. (2020). *Interactive web-based data visualization with R, plotly, and shiny*. CRC Press. <https://plotly-r.com>
+
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., Francois, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Muller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., Takahashi, K., Vaughan, D., Wilke, C., Woo, K., & Yutani, H. (2019). Welcome to the tidyverse. *Journal of Open Source Software, 4*(43), 1686. <https://doi.org/10.21105/joss.01686>
+
+Wickham, H., Pedersen, T. L., & Seidel, D. (2023). *scales: Scale functions for visualization* \[R package\]. Comprehensive R Archive Network. <https://cran.r-project.org/package=scales>
+
+Xie, Y., Cheng, J., & Tan, X. (2023). *DT: A wrapper of the JavaScript library 'DataTables'* \[R package\]. Comprehensive R Archive Network. <https://cran.r-project.org/package=DT>
+:::
