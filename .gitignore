@@ -10,3 +10,6 @@
 # Data files — not committed to repo
 Take Home 1/**/*.csv
 Take Home 1/**/*.xlsx
+VAST_Challenge_2026_MC2/
+**/MC2 data.json
+**/org_chart.json
