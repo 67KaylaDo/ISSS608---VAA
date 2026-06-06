@@ -20,7 +20,7 @@ format:
 ## 1. Overview
 
 ::: callout-important
-## Key Findings at a Glance
+#### Key Findings at a Glance
 
 -   The **17 May 2046, 4:21 am** SaidIT post (challenge-stated local time; **11:21 UTC** in the log) was **not human-authored**. The log records `Agent/person:john_windward` receiving a file-read task, passing a SaidIT permission check, posting `SwiftWren.txt`, then deleting both evidence files in a four-second burst.
 -   The observed mechanism is a **prompt-injection worm**: an agent reads `*_further_instructions.md`, executes a file-sourced post, deletes the payload, and relays the same task to other agents.
@@ -40,7 +40,7 @@ This analysis uses the full 185,147-event timeline (`MC2 data.json`) and organis
 | 1b. System overview around that chain | The chain sits inside a wider agent-to-agent relay network: 186 SwiftWren relays across 18 agents, embedded in a 19-agent / 6-department multi-campaign contamination pattern. Any of the agents in the SaidIT permission surface (Figure 5b) was a viable terminal executor. | Figures 1, 5b, 7, 8, 8b, and 9 |
 | 2\. Meaning and origin of post contents | The posts are file-sourced execution payloads, not normal messages. Their probable displayed content is the deleted payload files: `HiddenOrca.txt`, `MellowOtter.txt`, and `SwiftWren.txt`. Two of three families are traceable to executive agents (CFO, COO). | Table 3, Figure 10A, Figure 10, and Table 4 |
 | 3a. Prior occurrences and recurrence risk | Yes. HiddenOrca and MellowOtter fired before SwiftWren; the same `_further_instructions.md` relay pattern recurred across campaigns, with evidence of worm evolution toward more persistent, time-triggered propagation. | Figures 11, 12, 13, 13b and Table 5 |
-| 3b. One intervention point | Block `queue_subordinate_task` events whose path ends in `_further_instructions.md`; this would stop all 235 malicious queue relays with zero false positives among 16,803 legitimate queue events. | Figures 14, 15, 17 and Tables 6, 8 |
+| 3b. One intervention point | Block `queue_subordinate_task` events whose path ends in `_further_instructions.md`; this would stop all 235 malicious queue relays with zero false positives among 16,803 legitimate queue events. | Figures 14, 15, 16 and Tables 6, 8 |
 
 ------------------------------------------------------------------------
 
@@ -386,9 +386,11 @@ datatable(
 ```
 
 ::: callout-note
-## What the Register Prevents
+#### What the Register Prevents
 
 The log proves that file-sourced posts occurred, that the `*_further_instructions.md` relay pattern spread across agents, and that the final SwiftWren post was automated. It does **not** preserve the deleted payload text or fully explain how the first HiddenOrca instruction file entered the system. Those are treated as bounded inferences, not facts.
+
+**Limitations to keep in view:** deleted payload text cannot be reconstructed from the event log alone; HiddenOrca's initial source remains unresolved; the SaidIT permission surface is based on observed permission checks rather than a complete access-control list; and a future worm could choose a different filename pattern.
 :::
 
 ### 2.6 Visual Analytics Design
@@ -418,7 +420,7 @@ va_design <- tibble(
     "Expandable org tree (Figure 1), SaidIT permission surface bar (Figure 5b), igraph betweenness network (Figure 7), dept heatmap (Figure 8), ranked relay corridors (Figure 8b), relay ladder (Figure 9)",
     "Post field fingerprint bubble chart (Figure 10A), mechanism diagram (Figure 10), file-creator table (Table 4)",
     "Campaign timeline (Figure 11), inter-hop density (Figure 12), comparative stats (Table 5), cross-campaign agent overlap (Figure 13), relay calendar heatmap (Figure 13b)",
-    "Queue split by week (Figure 14), precision table (Table 6), intervention decision matrix (Figure 15), centrality ranking (Figure 16), counterfactual step chart (Figure 17), risk assessment (Table 8)"
+    "Queue split by week (Figure 14), precision table (Table 6), intervention decision matrix (Figure 15), counterfactual step chart (Figure 16), risk assessment (Table 8)"
   )
 )
 
@@ -878,7 +880,7 @@ ggplotly(p_vol, tooltip = c("x", "y")) %>%
 ```
 
 ::: callout-important
-## The Worm Was Operationally Invisible
+#### The Worm Was Operationally Invisible
 
 Worm activity is confined to a nine-day window (May 8–17), with anomalous posts on May 10, May 11, and May 17; after that, no further worm relays appear in the log. Critically, there is **no visible event-volume spike on any of those three post dates**: the worm's 235 malicious queue relays were indistinguishable from the thousands of legitimate `queue_subordinate_task` events firing daily. A threshold-based volume anomaly detector would have missed this incident entirely. The absence of post-May 17 worm activity could mean the relay network exhausted itself (all susceptible agents already infected), that the instruction files were manually removed, or that the observation window simply ends before a fourth campaign launched. None of these hypotheses can be resolved from the event log alone - which is itself a finding about the system's forensic readiness.
 :::
@@ -886,7 +888,7 @@ Worm activity is confined to a nine-day window (May 8–17), with anomalous post
 ### 3.3 Agent vs. Human Activity Baseline
 
 ::: callout-note
-## Why This Matters
+#### Why This Matters
 
 Of the `r nrow(post_events)` total SaidIT posts in the log, **`r sum(str_detect(post_events$parties_str, "Agent/"))` (`r scales::percent(mean(str_detect(post_events$parties_str, "Agent/")), accuracy = 1)`) were made by AI agents** - almost half. This is a dangerously high proportion for an unsupervised posting channel and creates a large attack surface.
 :::
@@ -941,7 +943,7 @@ ggplotly(p_attr, tooltip = c("x", "y", "fill")) %>%
 ```
 
 ::: callout-warning
-## A Near-50% Agent Posting Rate Is a Structural Attack Surface
+#### A Near-50% Agent Posting Rate Is a Structural Attack Surface
 
 When AI agents generate almost half of all messages on an internal social platform - with no human review gate before publication - the platform is, by architectural design, a direct output channel for any successfully compromised agent. This is not a side effect: it is what the system was built to do. The three anomalous posts were not a tail-risk event; they were a **predictable consequence** of giving autonomous agents unrestricted publishing rights to a channel visible to all employees. The correct framing for remediation is not "fix the bug that let an agent post gibberish," but "redesign the permission model that made this post structurally inevitable once a prompt-injection vector existed anywhere in the relay network."
 :::
@@ -975,6 +977,7 @@ p_hour <- ggplot(hour_dist,
   ) +
   scale_x_continuous(breaks = 0:23,
                      labels = paste0(0:23, ":00")) +
+  guides(fill = guide_legend(nrow = 1, byrow = TRUE)) +
   labs(
     title    = "SaidIT post time-of-day distribution",
     subtitle = "SwiftWren anomalous post fired at 11:21 UTC (4:21 am challenge-stated local time) - an after-hours posting pattern",
@@ -982,12 +985,16 @@ p_hour <- ggplot(hour_dist,
   ) +
   theme_minimal(base_size = 11) +
   theme(
-    plot.title  = element_text(face = "bold"),
-    axis.text.x = element_text(angle = 90, vjust = 0.5, size = 8),
-    legend.position = "bottom"
+    plot.title      = element_text(face = "bold"),
+    axis.text.x     = element_text(angle = 90, vjust = 0.5, size = 8),
+    axis.title.x    = element_text(margin = margin(t = 12)),
+    legend.position = "top",
+    legend.text     = element_text(size = 9),
+    plot.margin     = margin(10, 16, 16, 10)
   )
 
-ggplotly(p_hour, tooltip = c("x", "y", "fill"))
+ggplotly(p_hour, tooltip = c("x", "y", "fill"), height = 560) %>%
+  layout(margin = list(l = 80, r = 35, t = 115, b = 105))
 ```
 
 The timing evidence is suspicious, but it should not be reduced to a single UTC business-hours rule. HiddenOrca and SwiftWren fired at early-morning challenge-stated local times (05:45 and 04:21, using the same UTC-7 offset implied by the SwiftWren timestamp), while MellowOtter fired at 00:56 UTC, or 17:56 on May 10 in that same local frame. The stronger finding is therefore behavioural: all three anomalous posts occur in low-volume agent-posting slots and use the same file-sourced execution pattern, rather than fitting the normal human posting profile. The event log contains **no incident-response or alert events** on any of the three post dates, so there is no logged evidence that automated monitoring detected the anomalous posts when they fired. How long the posts remained visible in the `general` forum is unquantifiable from the current log.
@@ -1100,7 +1107,7 @@ ggplotly(p_perm, tooltip = "text", height = 540) %>%
 ```
 
 ::: callout-important
-## The Worm Did Not Need John Windward Specifically
+#### The Worm Did Not Need John Windward Specifically
 
 The permission surface chart reveals that **John Windward was one of 16 SaidIT-capable agents**, and every observed SaidIT-capable agent was also touched by the worm relay chain. If Chloe Ballast's agent had routed the final relay to another amber agent on this chart, a different name could have appeared on the post. The worm's design did not target John Windward's specific agent; it targeted any reachable agent with SaidIT posting capability. Revoking John Windward's posting rights alone would therefore achieve little - the worm could simply relay through the next reachable authorised agent. This is why the effective intervention belongs at the relay protocol level, not at the individual-agent level.
 :::
@@ -1166,7 +1173,7 @@ datatable(
 
 The five-event sequence encodes three forensically critical signals that go beyond the obvious fact that a post was made:
 
-**Signal 1 - John Windward's agent is a passive receiver, not an initiator.** The sequence originates with a `queue_subordinate_task` issued by Chloe Ballast's agent. John Windward's agent did not decide to post; it was instructed to. Any post-incident control that focuses on restricting John Windward's posting rights entirely misunderstands the chain of causation.
+**Signal 1 - John Windward's agent is a passive receiver, not an initiator.** The sequence originates with a `queue_subordinate_task` issued by Chloe Ballast's agent. John Windward's agent did not decide to post; it was instructed to. This separates the visible poster from the agent that triggered the final handoff.
 
 **Signal 2 - The SaidIT permission check passed, by design.** The `saidit_post_check` at step 2 confirms that John Windward's agent holds legitimate posting authority. The permission model did not fail or get bypassed - it worked exactly as designed. The architectural flaw is that the permission system asks *"can this agent post?"* but never asks *"was this posting instruction authorised by a human?"*
 
@@ -1261,7 +1268,7 @@ The Gantt strips the incident of all organisational complexity and reduces it to
 
 The instruction file `SwiftWren_further_instructions.md` was relayed **186 times** across **18 agents**, spanning nine calendar dates before the post. To keep the network readable, repeated relays between the same two agents are aggregated into one arrow. The sender-receiver table is converted into an [igraph network](https://r4va.netlify.app/chap27) to compute **betweenness centrality**, then rendered as an interactive [visNetwork](https://r4va.netlify.app/chap29) graph. Node size represents bridge centrality; arrow thickness represents repeated relay volume.
 
-Read this plot from **Emma Harbor** (origin) toward **John Windward** (target). The most important visual question is not "who has the largest circle?" but "which bridge nodes connect otherwise separate parts of the relay chain?"
+Read this plot from **Emma Harbor** (origin) toward **John Windward** (target). The most important visual question is not "who has the largest circle?" but "which bridge nodes connect otherwise separate parts of the relay chain?" **Noah Mariner is intentionally absent**: he appears in the MellowOtter origin evidence (Section 5.3), not in the SwiftWren relay nodes used for this graph.
 
 ```{r}
 #| label: propagation-network
@@ -1655,7 +1662,7 @@ ggplot(relay_ladder) +
   )
 ```
 
-The relay ladder forces a reframing of the post-incident narrative. The common reading - "John Windward's agent posted gibberish" - collapses the actor and the triggering action into the same node. The ladder shows they are categorically separate: the **action** (queue the posting instruction) was taken at the final handoff by Chloe Ballast's agent; the **capability** (SaidIT posting rights) happened to reside with John Windward's agent. Had Chloe Ballast's agent instead queued any other SaidIT-capable agent at the equivalent final hop, a different name would appear on the anomalous post. This insight directly rules out individual-agent remediation as a sufficient response and redirects the intervention to the relay mechanism itself.
+The relay ladder forces a reframing of the post-incident narrative. The common reading - "John Windward's agent posted gibberish" - collapses the actor and the triggering action into the same node. The ladder separates them: the **action** was Chloe Ballast's final queue task, while the **capability** was John Windward's SaidIT posting permission. This makes an individual-agent fix insufficient and redirects remediation to the relay mechanism itself.
 
 ------------------------------------------------------------------------
 
@@ -1766,7 +1773,7 @@ ggplotly(p_field, tooltip = "text", height = 470) %>%
 The field fingerprint chart delivers a single unambiguous finding: `content_source` is a **perfect discriminator** in this log. Every normal post - human or agent - uses inline `content`. Every anomalous post uses `content_source`. There are zero mixed cases. This binary separation means that a SaidIT platform-level rule rejecting any post where the payload is file-sourced rather than inline would have caught all three anomalous posts at the point of delivery, independently of any upstream relay-chain intervention. It is the strongest *reactive* control available; the relay-chain block (Section 7) is the stronger *preventive* control because it stops the worm before any post is ever attempted.
 
 ::: callout-important
-## Interpretation
+#### Interpretation
 
 The posts do **not** appear to be normal business messages with hidden semantic value. Their most defensible meaning is operational: each post is a proof that the worm reached an agent with SaidIT privileges and successfully used a local payload file as the post body. The probable visible content was the literal content of `HiddenOrca.txt`, `MellowOtter.txt`, and `SwiftWren.txt`; however, each payload was deleted one second after posting, so the log supports the origin and delivery mechanism more strongly than it supports any exact reconstruction of the deleted text.
 :::
@@ -1781,7 +1788,7 @@ The posts do **not** appear to be normal business messages with hidden semantic 
 ### 5.2 The Prompt-Injection Worm: Mechanism
 
 ::: callout-warning
-## Prompt Injection - A Known LLM Attack Vector
+#### Prompt Injection - A Known LLM Attack Vector
 
 A prompt-injection attack embeds instructions inside input data (here, a file the agent is told to read). When the LLM agent processes the file, the embedded instructions override its normal operating context - causing it to take actions its operator never authorised. The **worm** variant additionally instructs the agent to propagate itself to peer agents, creating an exponentially spreading infection.
 :::
@@ -1939,7 +1946,7 @@ datatable(
 ```
 
 ::: callout-important
-## Who Holds the Keys?
+#### Who Holds the Keys?
 
 -   `Agent/person:emma_harbor` (CFO) **created** `SwiftWren.txt` and **first executed** the `SwiftWren_further_instructions.md` worm on **9 May 2046 at 15:02 UTC**.
 -   `Agent/person:noah_mariner` (COO) did the same for the MellowOtter family on **10 May 2046**.
@@ -1948,7 +1955,7 @@ datatable(
 :::
 
 ::: callout-warning
-## Executive Agent Privilege: The Deepest Governance Failure
+#### Executive Agent Privilege: The Deepest Governance Failure
 
 The discovery that `Agent/person:emma_harbor` (CFO) and `Agent/person:noah_mariner` (COO) created payload files is not merely an attribution finding - it is a **governance indictment**. In most security architectures, the highest-privilege principals operate under the *strictest* autonomous-action constraints. Here the inverse is true: executive agents hold the broadest file-system and task-queuing rights precisely because their human principals hold the broadest organisational authority. The result is that a prompt-injection attack successfully targeting any executive agent's file-reading pipeline has the **maximum possible blast radius** - access to the entire relay network, the executive file namespace, and SaidIT publishing rights through the first available downstream agent.
 
@@ -2018,7 +2025,7 @@ Each relay hop represents one agent forwarding the worm to another. A [density p
 
 ```{r}
 #| label: worm-velocity
-#| fig-cap: "Figure 12: Relay hop interval distribution per campaign. SwiftWren's near-regular ~60-minute intervals suggest a cron-like trigger built into the worm instructions - not random agent behaviour."
+#| fig-cap: "Figure 12: Relay hop interval distribution per campaign. SwiftWren's near-regular ~60-minute intervals suggest a timed relay condition, though the deleted instruction content cannot be inspected directly."
 
 hop_intervals <- chain_events %>%
   group_by(instr_file) %>%
@@ -2070,7 +2077,7 @@ p_velocity <- ggplot(hop_intervals,
   scale_x_continuous(limits = c(0, 200)) +
   labs(
     title    = "Inter-hop relay interval distribution by worm campaign",
-    subtitle = "Dashed lines = median interval per campaign. SwiftWren's ~60-min peak implies a timed trigger.",
+    subtitle = "Dashed lines = median interval per campaign. SwiftWren's ~60-min peak suggests scheduled propagation.",
     x = "Minutes between consecutive relay hops", y = "Density"
   ) +
   theme_minimal(base_size = 12) +
@@ -2083,7 +2090,7 @@ p_velocity <- ggplot(hop_intervals,
 p_velocity
 ```
 
-The velocity distribution reveals a functionally significant architectural clue. SwiftWren's near-regular \~60-minute inter-hop interval - clearly visible as a sharp density peak - is inconsistent with random agent scheduling jitter. It is consistent with a **cron-like execution condition embedded in the instruction file itself**: the worm instructs each receiving agent to wait approximately 60 minutes before forwarding to the next, either to evade burst-detection monitoring or to ensure the previous hop has completed before the next fires. HiddenOrca and MellowOtter show flatter, longer-tailed distributions, suggesting their relay cadence was less tightly engineered - possibly earlier, cruder versions of the worm. The evolution from unstructured (HiddenOrca) to timed (\~60 min, SwiftWren) propagation is consistent with an adversary refining the worm across three iterations.
+The velocity distribution reveals a functionally significant architectural clue. SwiftWren's near-regular \~60-minute inter-hop interval - visible as a sharp density peak - suggests a timed or scheduled relay condition. Because the instruction file was deleted, the log cannot prove the exact wording of that condition; it can only show the resulting cadence. HiddenOrca and MellowOtter show flatter, longer-tailed distributions, suggesting less regular relay behaviour. The shift from looser early campaigns to SwiftWren's tighter cadence is consistent with, but does not by itself prove, iterative refinement of the worm.
 
 ### 6.3 Comparative Statistics
 
@@ -2429,63 +2436,15 @@ ggplot(decision_scores,
   )
 ```
 
-The decision matrix reveals a critical structural difference between the top-ranked control and all alternatives: only the `*_further_instructions.md` queue-task block scores **Strong** on *stopping propagation*. Every other option - including the second-best control (reject `content_source` SaidIT posts) - acts at the *post-propagation* stage. Blocking propagation means the worm cannot spread at all: even if the initial instruction file is placed into the system, the first relay hop is blocked and no downstream agent ever receives the instruction. All other controls are, by definition, damage-limitation measures rather than prevention measures. The matrix justifies the single-intervention constraint not by ruling out supplementary controls, but by showing that the propagation block is categorically earlier in the kill chain than any alternative.
+The decision matrix reveals a critical structural difference between the top-ranked control and all alternatives: only the `*_further_instructions.md` queue-task block scores **Strong** on *stopping propagation*. Rejecting `content_source` SaidIT posts is valuable, but it acts after propagation. The selected rule is earlier in the chain: it blocks the first relay before downstream agents read, post, delete, or forward the instruction.
 
-### 7.4 Betweenness Centrality: Bridge Nodes Versus Final Gateway
-
-If a *person-based* intervention is considered, network betweenness helps separate broad relay bridges from the final gateway to John Windward. Evelyn Dock has the highest overall bridge score, while Chloe Ballast is the decisive final relay into the anomalous poster. This is why the recommended remedy remains a system rule: it blocks the malicious task pattern before the analyst has to choose one person.
-
-```{r}
-#| label: centrality-ranking
-#| fig-cap: "Figure 16: Betweenness centrality ranking of all agents in the SwiftWren propagation network. Evelyn Dock is the highest overall bridge; Chloe Ballast is the final gateway into John Windward."
-#| fig-width: 11
-#| fig-height: 6.2
-#| out-width: "100%"
-
-centrality_ranked <- centrality_df %>%
-  arrange(desc(betweenness)) %>%
-  mutate(
-    agent_label = name,
-    rank        = row_number(),
-    highlight   = name %in% c("Chloe Ballast", "John Windward", "Emma Harbor")
-  )
-
-p_centrality <- ggplot(centrality_ranked,
-                       aes(x = reorder(agent_label, betweenness),
-                           y = betweenness,
-                           fill = highlight)) +
-  geom_col() +
-  geom_text(aes(label = round(betweenness, 3)),
-            hjust = -0.10, size = 2.9) +
-  coord_flip(clip = "off") +
-  scale_fill_manual(values = c("FALSE" = "#5C85D6",
-                               "TRUE"  = "#9B59B6"),
-                    guide = "none") +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.30))) +
-  labs(
-    title    = "Betweenness centrality - SwiftWren propagation network",
-    subtitle = "Purple bars = key actors. The highest bridge is Evelyn Dock; the decisive final gateway is Chloe Ballast.",
-    x = NULL, y = "Normalised betweenness centrality"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold"),
-    plot.margin = margin(10, 48, 10, 10)
-  )
-
-ggplotly(p_centrality, tooltip = c("x", "y"), height = 620) %>%
-  layout(margin = list(l = 145, r = 105, t = 90, b = 65))
-```
-
-The centrality ranking underscores why a people-based intervention - restricting the agents with highest bridge scores - would be operationally disruptive without being sufficient. Evelyn Dock's high betweenness reflects her agent's position in the relay topology, not any elevated privilege or intentional involvement. Restricting her agent's task-routing capability would degrade legitimate operations across the departments she bridges, while leaving the underlying relay mechanism intact for any other path through the network graph. Chloe Ballast's position as the decisive final gateway is topologically specific to the SwiftWren campaign; a future worm campaign with a different relay path would identify a different final gateway. Only the filename rule at the protocol level operates independently of network topology.
-
-### 7.5 Counterfactual: Blocking at Hop 1 Terminates Every Campaign
+### 7.4 Counterfactual: Blocking at Hop 1 Terminates Every Campaign
 
 The chart below answers the question directly: *if the rule had been in place from the start, how many of the 235 malicious queue relays would have been prevented?*
 
 ```{r}
 #| label: counterfactual
-#| fig-cap: "Figure 17: Cumulative malicious queue relays per campaign. A rule blocking the first relay (red dashed line) terminates each queue chain immediately - 100% prevention across all three campaigns."
+#| fig-cap: "Figure 16: Cumulative malicious queue relays per campaign. A rule blocking the first relay (red dashed line) terminates each queue chain immediately - 100% prevention across all three campaigns."
 #| fig-width: 12
 #| fig-height: 6.8
 #| out-width: "100%"
@@ -2590,12 +2549,12 @@ ggplotly(p_cfact, tooltip = c("x", "y", "colour"), height = 620) %>%
   )
 ```
 
-The counterfactual chart answers the intervention question with maximum evidential clarity: **100% prevention, zero false positives, one rule.** The step functions for all three campaigns collapse to zero at relay 1 if the block is applied. This is not a probabilistic estimate or a model prediction - it is a direct read from the event log. Every one of the 235 malicious queue relays references a filename ending in `_further_instructions.md`. Not one legitimate queue task in 16,803 events does so. The rule's recall and precision are both perfect within the observed data. The appropriate caveat is that a future worm could use a different filename pattern - which is why the supplementary hardening measures (namespace isolation, content-source rejection) are listed as defence-in-depth, not alternatives.
+The counterfactual chart answers the intervention question directly: **100% prevention, zero false positives, one rule** within the observed data. Every one of the 235 malicious queue relays references a filename ending in `_further_instructions.md`, while none of the 16,803 legitimate queue tasks does. The caveat is that a future worm could use a different filename pattern, which is why namespace isolation and `content_source` rejection remain useful defence-in-depth controls.
 
-### 7.6 Recommended Remedy
+### 7.5 Recommended Remedy
 
 ::: callout-tip
-## Primary Intervention - Deploy Immediately
+#### Primary Intervention - Deploy Immediately
 
 **Block any `queue_subordinate_task` event whose `args.path` value ends in `_further_instructions.md`.**
 
@@ -2723,7 +2682,7 @@ datatable(
 ```
 
 ::: callout-important
-## The Central Lesson
+#### The Central Lesson
 
 This incident is not a story about a malfunctioning agent. It is a story about a multi-agent architecture that was designed with **speed and autonomy as primary values, and security as an afterthought**. The worm succeeded because every component of the system performed exactly as designed: agents read files they were told to read, posted content they were instructed to post, queued tasks they were authorised to queue, and deleted files they had permission to delete. The only thing missing from the design was a check that asks: *"did a human authorise this chain of actions?"*
 
