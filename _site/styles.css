@@ -1,4 +1,4 @@
-/* styles.css — Sketchy + Mario colors + Fira Code Nerd Font */
+/* styles.css - Sketchy + Mario colors + Fira Code Nerd Font */
 
 /* ===== LOAD FONT (fallback if Nerd Font not installed) ===== */
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
@@ -131,8 +131,9 @@ a:hover {
   border-left: 3px solid var(--mario-blue);
 }
 
-/* ===== DROPDOWN MENU FIX ===== */
-.dropdown-menu {
-  max-height: 90vh;
+/* ===== HANDS-ON DROPDOWN SCROLL ===== */
+.dropdown-menu[aria-labelledby="nav-menu-hands-on-exercise"] {
+  max-height: min(70vh, 32rem);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
