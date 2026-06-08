@@ -133,7 +133,7 @@ a:hover {
 
 /* ===== HANDS-ON DROPDOWN SCROLL ===== */
 .dropdown-menu[aria-labelledby="nav-menu-hands-on-exercise"] {
-  max-height: min(70vh, 32rem);
+  max-height: min(45vh, 15rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
