@@ -44,6 +44,8 @@ website:
             href: Hands_on_Ex07a.qmd
           - text: "7b. Visualising and Analysing Text Data with R: tidytext methods"
             href: Hands_on_Ex07b.qmd
+          - text: "8. Visualising and Analysing Time-oriented Data"
+            href: Hands_on_Ex08.qmd
 
       - text: "Take-home Exercise"
         menu:
