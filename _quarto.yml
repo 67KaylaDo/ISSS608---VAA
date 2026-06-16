@@ -46,6 +46,12 @@ website:
             href: Hands_on_Ex07b.qmd
           - text: "8. Visualising and Analysing Time-oriented Data"
             href: Hands_on_Ex08.qmd
+          - text: "9a. Choropleth Mapping with R"
+            href: Hands_on_Ex09_1.qmd
+          - text: "9b. Visualising Geospatial Point Data"
+            href: Hands_on_Ex09_2.qmd
+          - text: "9c. Analytical Mapping"
+            href: Hands_on_Ex09_3.qmd
 
       - text: "Take-home Exercise"
         menu:
