@@ -2,6 +2,8 @@
 project:
   type: website
   output-dir: _site
+  render:
+    - "*.qmd"
 website:
   title: |
     <img src="Hands-on Exercises/Hands-on W1/Mario 6.png" height="40" style="vertical-align:middle; margin-right:10px;">
@@ -52,6 +54,8 @@ website:
             href: Hands_on_Ex09_2.qmd
           - text: "9c. Analytical Mapping"
             href: Hands_on_Ex09_3.qmd
+          - text: "10. Information Dashboard Design with R"
+            href: Hands_on_Ex10.qmd
 
       - text: "Take-home Exercise"
         menu:
